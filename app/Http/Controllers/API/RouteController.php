@@ -1,26 +1,41 @@
 <?php
 
-namespace App\Http\Controllers\API;
-
+namespace App\Http\Controllers\API; // Update this line
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+
+
 use App\Models\Route;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class RouteController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $routes = Route::orderBy('name')->paginate(15);
+        $query = Route::query();
         
-        return response()->json($routes);
+        // Apply search if provided
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+        }
+        
+        $routes = $query->orderBy('name')
+            ->paginate(15)
+            ->withQueryString();
+        
+        return Inertia::render('Routes/Index', [
+            'routes' => $routes,
+            'filters' => $request->only(['search']),
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function create()
+    {
+        return Inertia::render('Routes/Create');
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -39,29 +54,28 @@ class RouteController extends Controller
         
         $route = Route::create($validated);
         
-        return response()->json([
-            'message' => 'Route created successfully',
+        return redirect()->route('routes.index')
+            ->with('success', 'Route created successfully.');
+    }
+
+    public function show(Route $route)
+    {
+        $route->load('schedules.driver.user', 'schedules.vehicle');
+        
+        return Inertia::render('Routes/Show', [
             'route' => $route,
-        ], 201);
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function edit(Route $route)
     {
-        $route = Route::with('schedules.driver', 'schedules.vehicle')->findOrFail($id);
-        
-        return response()->json($route);
+        return Inertia::render('Routes/Edit', [
+            'route' => $route,
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Route $route)
     {
-        $route = Route::findOrFail($id);
-        
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
@@ -78,30 +92,20 @@ class RouteController extends Controller
         
         $route->update($validated);
         
-        return response()->json([
-            'message' => 'Route updated successfully',
-            'route' => $route,
-        ]);
+        return redirect()->route('routes.index')
+            ->with('success', 'Route updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(Route $route)
     {
-        $route = Route::findOrFail($id);
-        
         // Check if route is used in schedules
         if ($route->schedules()->exists()) {
-            return response()->json([
-                'message' => 'Cannot delete route as it is used in schedules',
-            ], 409);
+            return back()->with('error', 'Cannot delete route as it is used in schedules.');
         }
         
         $route->delete();
         
-        return response()->json([
-            'message' => 'Route deleted successfully',
-        ]);
+        return redirect()->route('routes.index')
+            ->with('success', 'Route deleted successfully.');
     }
 }

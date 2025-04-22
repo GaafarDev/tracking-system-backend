@@ -2,13 +2,13 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DriverController;
-use App\Http\Controllers\VehicleController;
-use App\Http\Controllers\RouteController;
-use App\Http\Controllers\ScheduleController;
-use App\Http\Controllers\IncidentController;
-use App\Http\Controllers\SosAlertController;
+use App\Http\Controllers\API\DashboardController;
+use App\Http\Controllers\API\DriverController;
+use App\Http\Controllers\API\VehicleController;
+use App\Http\Controllers\API\RouteController;
+use App\Http\Controllers\API\ScheduleController;
+use App\Http\Controllers\API\IncidentController;
+use App\Http\Controllers\API\SosAlertController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [

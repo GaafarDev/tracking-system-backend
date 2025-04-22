@@ -1,17 +1,14 @@
 <?php
-
-namespace App\Http\Controllers\API;  // Make sure this namespace is correct
-
+namespace App\Http\Controllers\API; // Update this line
 use App\Http\Controllers\Controller;
+
+
 use App\Models\Incident;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class IncidentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $query = Incident::with('driver.user');
@@ -55,9 +52,17 @@ class IncidentController extends Controller
         ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
+    public function create()
+    {
+        return Inertia::render('Incidents/Create');
+    }
+
+    public function store(Request $request)
+    {
+        // Implementation will be added later
+        return redirect()->route('incidents.index');
+    }
+
     public function show(Incident $incident)
     {
         $incident->load('driver.user');
@@ -67,9 +72,6 @@ class IncidentController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Incident $incident)
     {
         $incident->load('driver.user');
@@ -79,9 +81,6 @@ class IncidentController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Incident $incident)
     {
         $validated = $request->validate([
@@ -98,5 +97,13 @@ class IncidentController extends Controller
         
         return redirect()->route('incidents.index')
             ->with('success', 'Incident updated successfully.');
+    }
+
+    public function destroy(Incident $incident)
+    {
+        $incident->delete();
+        
+        return redirect()->route('incidents.index')
+            ->with('success', 'Incident deleted successfully.');
     }
 }

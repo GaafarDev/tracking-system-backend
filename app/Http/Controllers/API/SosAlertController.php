@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\API;
-
+namespace App\Http\Controllers\API; // Update this line
 use App\Http\Controllers\Controller;
+
+
 use App\Models\SosAlert;
 use App\Models\Notification;
 use Illuminate\Http\Request;
@@ -10,9 +11,6 @@ use Inertia\Inertia;
 
 class SosAlertController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $sosAlerts = SosAlert::with('driver.user')
@@ -25,26 +23,20 @@ class SosAlertController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         
-        return Inertia::render('Sos/Index', [
+        return Inertia::render('SOS/Index', [
             'sosAlerts' => $sosAlerts,
         ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(SosAlert $sosAlert)
     {
         $sosAlert->load('driver.user');
         
-        return Inertia::render('Sos/Show', [
+        return Inertia::render('SOS/Show', [
             'sosAlert' => $sosAlert,
         ]);
     }
 
-    /**
-     * Mark SOS alert as responded.
-     */
     public function respond(Request $request, SosAlert $sosAlert)
     {
         // Only update if currently active
@@ -66,9 +58,6 @@ class SosAlertController extends Controller
         return redirect()->back();
     }
     
-    /**
-     * Mark SOS alert as resolved.
-     */
     public function resolve(Request $request, SosAlert $sosAlert)
     {
         // Only update if not already resolved

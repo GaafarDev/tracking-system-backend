@@ -1,18 +1,19 @@
 <?php
 
-namespace App\Http\Controllers\API;
-
+namespace App\Http\Controllers\API; // Update this line
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+
+
 use App\Models\Schedule;
 use App\Models\Driver;
+use App\Models\Route;
+use App\Models\Vehicle;
 use App\Models\Notification;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ScheduleController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $query = Schedule::with(['route', 'driver.user', 'vehicle']);
@@ -41,12 +42,32 @@ class ScheduleController extends Controller
             ->orderBy('departure_time')
             ->paginate(20);
         
-        return response()->json($schedules);
+        $drivers = Driver::with('user')->get();
+        $routes = Route::all();
+        $vehicles = Vehicle::where('status', 'active')->get();
+        
+        return Inertia::render('Schedules/Index', [
+            'schedules' => $schedules,
+            'drivers' => $drivers,
+            'routes' => $routes,
+            'vehicles' => $vehicles,
+            'filters' => $request->only(['driver_id', 'route_id', 'day_of_week', 'is_active']),
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function create()
+    {
+        $drivers = Driver::with('user')->where('status', 'active')->get();
+        $routes = Route::all();
+        $vehicles = Vehicle::where('status', 'active')->get();
+        
+        return Inertia::render('Schedules/Create', [
+            'drivers' => $drivers,
+            'routes' => $routes,
+            'vehicles' => $vehicles,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -67,15 +88,10 @@ class ScheduleController extends Controller
         // Notify the driver
         $this->notifyDriver($schedule, 'assigned');
         
-        return response()->json([
-            'message' => 'Schedule created successfully',
-            'schedule' => $schedule,
-        ], 201);
+        return redirect()->route('schedules.index')
+            ->with('success', 'Schedule created successfully.');
     }
     
-    /**
-     * Check for schedule conflicts.
-     */
     private function checkScheduleConflicts($data)
     {
         // Check if driver is already scheduled at the same time
@@ -88,7 +104,7 @@ class ScheduleController extends Controller
             ->exists();
             
         if ($driverConflict) {
-            abort(422, 'Driver is already scheduled during this time period');
+            return back()->with('error', 'Driver is already scheduled during this time period');
         }
         
         // Check if vehicle is already scheduled at the same time
@@ -101,13 +117,10 @@ class ScheduleController extends Controller
             ->exists();
             
         if ($vehicleConflict) {
-            abort(422, 'Vehicle is already scheduled during this time period');
+            return back()->with('error', 'Vehicle is already scheduled during this time period');
         }
     }
     
-    /**
-     * Notify driver about schedule changes.
-     */
     private function notifyDriver($schedule, $action)
     {
         $driver = Driver::findOrFail($schedule->driver_id);
@@ -122,23 +135,31 @@ class ScheduleController extends Controller
         ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(Schedule $schedule)
     {
-        $schedule = Schedule::with(['route', 'driver.user', 'vehicle'])->findOrFail($id);
+        $schedule->load(['route', 'driver.user', 'vehicle']);
         
-        return response()->json($schedule);
+        return Inertia::render('Schedules/Show', [
+            'schedule' => $schedule,
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function edit(Schedule $schedule)
     {
-        $schedule = Schedule::findOrFail($id);
+        $drivers = Driver::with('user')->where('status', 'active')->get();
+        $routes = Route::all();
+        $vehicles = Vehicle::where('status', 'active')->get();
         
+        return Inertia::render('Schedules/Edit', [
+            'schedule' => $schedule,
+            'drivers' => $drivers,
+            'routes' => $routes,
+            'vehicles' => $vehicles,
+        ]);
+    }
+
+    public function update(Request $request, Schedule $schedule)
+    {
         $validated = $request->validate([
             'route_id' => 'sometimes|required|exists:routes,id',
             'driver_id' => 'sometimes|required|exists:drivers,id',
@@ -148,23 +169,6 @@ class ScheduleController extends Controller
             'day_of_week' => 'sometimes|required|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
             'is_active' => 'sometimes|boolean',
         ]);
-        
-        // If any timing or resource assignment changed, check for conflicts
-        if (isset($validated['driver_id']) || isset($validated['vehicle_id']) || 
-            isset($validated['day_of_week']) || isset($validated['departure_time']) || 
-            isset($validated['arrival_time'])) {
-            
-            // Merge existing data with updates for conflict check
-            $checkData = array_merge([
-                'driver_id' => $schedule->driver_id,
-                'vehicle_id' => $schedule->vehicle_id,
-                'day_of_week' => $schedule->day_of_week,
-                'departure_time' => $schedule->departure_time,
-                'arrival_time' => $schedule->arrival_time,
-            ], $validated);
-            
-            $this->checkScheduleConflicts($checkData);
-        }
         
         $oldDriverId = $schedule->driver_id;
         $schedule->update($validated);
@@ -187,18 +191,12 @@ class ScheduleController extends Controller
             $this->notifyDriver($schedule, 'updated');
         }
         
-        return response()->json([
-            'message' => 'Schedule updated successfully',
-            'schedule' => $schedule,
-        ]);
+        return redirect()->route('schedules.index')
+            ->with('success', 'Schedule updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(Schedule $schedule)
     {
-        $schedule = Schedule::findOrFail($id);
         $driver = Driver::findOrFail($schedule->driver_id);
         
         // Notify the driver about removal
@@ -211,8 +209,7 @@ class ScheduleController extends Controller
         
         $schedule->delete();
         
-        return response()->json([
-            'message' => 'Schedule deleted successfully',
-        ]);
+        return redirect()->route('schedules.index')
+            ->with('success', 'Schedule deleted successfully.');
     }
 }
