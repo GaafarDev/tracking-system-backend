@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -28,19 +27,11 @@ Route::middleware([
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
-    // Driver routes - using resource controller
+    // Resource controllers
     Route::resource('drivers', DriverController::class);
-    
-    // Vehicle routes - using resource controller
     Route::resource('vehicles', VehicleController::class);
-    
-    // Route routes - using resource controller
     Route::resource('routes', RouteController::class);
-    
-    // Schedule routes - using resource controller
     Route::resource('schedules', ScheduleController::class);
-    
-    // Incident routes - using resource controller
     Route::resource('incidents', IncidentController::class);
     
     // SOS Alert routes
