@@ -51,22 +51,22 @@ const logout = () => {
                                 <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
                                     Dashboard
                                 </NavLink>
-                                <NavLink :href="route('drivers.index')" :active="route().current('drivers*')">
+                                <NavLink :href="route('drivers.index')" :active="route().current('drivers.*')">
                                     Drivers
                                 </NavLink>
-                                <NavLink :href="route('vehicles.index')" :active="route().current('vehicles*')">
+                                <NavLink :href="route('vehicles.index')" :active="route().current('vehicles.*')">
                                     Vehicles
                                 </NavLink>
-                                <NavLink :href="route('routes.index')" :active="route().current('routes*')">
+                                <NavLink :href="route('routes.index')" :active="route().current('routes.*')">
                                     Routes
                                 </NavLink>
-                                <NavLink :href="route('schedules.index')" :active="route().current('schedules*')">
+                                <NavLink :href="route('schedules.index')" :active="route().current('schedules.*')">
                                     Schedules
                                 </NavLink>
-                                <NavLink :href="route('incidents.index')" :active="route().current('incidents*')">
+                                <NavLink :href="route('incidents.index')" :active="route().current('incidents.*')">
                                     Incidents
                                 </NavLink>
-                                <NavLink :href="route('sos.index')" :active="route().current('sos*')">
+                                <NavLink :href="route('sos.index')" :active="route().current('sos.*')">
                                     SOS Alerts
                                 </NavLink>
                             </div>
@@ -212,22 +212,22 @@ const logout = () => {
                         <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
                             Dashboard
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('drivers.index')" :active="route().current('drivers*')">
+                        <ResponsiveNavLink :href="route('drivers.index')" :active="route().current('drivers.*')">
                             Drivers
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('vehicles.index')" :active="route().current('vehicles*')">
+                        <ResponsiveNavLink :href="route('vehicles.index')" :active="route().current('vehicles.*')">
                             Vehicles
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('routes.index')" :active="route().current('routes*')">
+                        <ResponsiveNavLink :href="route('routes.index')" :active="route().current('routes.*')">
                             Routes
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('schedules.index')" :active="route().current('schedules*')">
+                        <ResponsiveNavLink :href="route('schedules.index')" :active="route().current('schedules.*')">
                             Schedules
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('incidents.index')" :active="route().current('incidents*')">
+                        <ResponsiveNavLink :href="route('incidents.index')" :active="route().current('incidents.*')">
                             Incidents
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('sos.index')" :active="route().current('sos*')">
+                        <ResponsiveNavLink :href="route('sos.index')" :active="route().current('sos.*')">
                             SOS Alerts
                         </ResponsiveNavLink>
                     </div>

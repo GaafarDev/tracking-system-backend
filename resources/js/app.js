@@ -7,6 +7,17 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
+// Fix Leaflet's icon paths
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: '/images/vendor/leaflet/dist/marker-icon-2x.png',
+    iconUrl: '/images/vendor/leaflet/dist/marker-icon.png',
+    shadowUrl: '/images/vendor/leaflet/dist/marker-shadow.png',
+});
+
+// Make Leaflet available globally if needed
+window.L = L;
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
@@ -21,4 +32,6 @@ createInertiaApp({
     progress: {
         color: '#4B5563',
     },
+    // Enable scroll position preservation
+    preserveScroll: true,
 });
