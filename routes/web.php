@@ -34,6 +34,7 @@ Route::middleware([
     Route::resource('schedules', ScheduleController::class);
     Route::resource('incidents', IncidentController::class);
     
+    
     // SOS Alert routes
     Route::get('/sos', [SosAlertController::class, 'index'])->name('sos.index');
     Route::get('/sos/{sosAlert}', [SosAlertController::class, 'show'])->name('sos.show');

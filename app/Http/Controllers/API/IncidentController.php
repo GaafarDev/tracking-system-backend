@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 
 
 use App\Models\Incident;
+use App\Models\Driver;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -106,4 +107,45 @@ class IncidentController extends Controller
         return redirect()->route('incidents.index')
             ->with('success', 'Incident deleted successfully.');
     }
+
+    public function report(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'type' => 'required|string',
+            'description' => 'required|string',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'photo' => 'nullable|image|max:5120', // 5MB max
+        ]);
+        
+        $user = $request->user();
+        $driver = Driver::where('user_id', $user->id)->firstOrFail();
+        
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('incident_photos', 'public');
+        }
+        
+        $incident = Incident::create([
+            'driver_id' => $driver->id,
+            'type' => $validated['type'],
+            'description' => $validated['description'],
+            'latitude' => $validated['latitude'],
+            'longitude' => $validated['longitude'],
+            'photo_path' => $photoPath,
+            'status' => 'reported',
+        ]);
+        
+        return response()->json([
+            'message' => 'Incident reported successfully',
+            'incident' => $incident,
+        ], 201);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Failed to report incident',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 }

@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
@@ -9,6 +9,25 @@ const props = defineProps({
 });
 
 const search = ref(props.filters.search || '');
+
+// Refresh data when coming back to this page
+watch(() => route().current(), (current) => {
+  if (current === 'routes.index') {
+    router.reload({ only: ['routes'] });
+  }
+});
+
+// Debounce search to avoid too many requests
+let searchTimeout;
+watch(search, (value) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        router.get(route('routes.index'), { search: value }, {
+            preserveState: true,
+            replace: true,
+        });
+    }, 300);
+});
 
 function formatDistance(distance) {
     if (!distance) return 'N/A';

@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Http\Controllers\API; // Update this line
+namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
-
 
 use App\Models\Route;
 use Illuminate\Http\Request;
@@ -15,15 +14,25 @@ class RouteController extends Controller
         $query = Route::query();
         
         // Apply search if provided
-        if ($request->has('search')) {
+        if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
-            $query->where('name', 'like', "%{$search}%")
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%");
+            });
         }
         
+        // Get routes with pagination
         $routes = $query->orderBy('name')
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
+        
+        // Debug information
+        \Log::info('Routes query executed', [
+            'count' => $routes->count(),
+            'total' => $routes->total(),
+            'search' => $request->search ?? 'none'
+        ]);
         
         return Inertia::render('Routes/Index', [
             'routes' => $routes,
@@ -42,14 +51,9 @@ class RouteController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'waypoints' => 'nullable|array',
-            'waypoints.*.lat' => 'required_with:waypoints|numeric',
-            'waypoints.*.lng' => 'required_with:waypoints|numeric',
             'stops' => 'nullable|array',
-            'stops.*.name' => 'required_with:stops|string',
-            'stops.*.lat' => 'required_with:stops|numeric',
-            'stops.*.lng' => 'required_with:stops|numeric',
-            'distance_km' => 'nullable|numeric|min:0',
-            'estimated_duration_minutes' => 'nullable|integer|min:1',
+            'distance_km' => 'nullable|numeric',
+            'estimated_duration_minutes' => 'nullable|integer',
         ]);
         
         $route = Route::create($validated);
@@ -60,8 +64,6 @@ class RouteController extends Controller
 
     public function show(Route $route)
     {
-        $route->load('schedules.driver.user', 'schedules.vehicle');
-        
         return Inertia::render('Routes/Show', [
             'route' => $route,
         ]);
@@ -77,17 +79,12 @@ class RouteController extends Controller
     public function update(Request $request, Route $route)
     {
         $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'waypoints' => 'nullable|array',
-            'waypoints.*.lat' => 'required_with:waypoints|numeric',
-            'waypoints.*.lng' => 'required_with:waypoints|numeric',
             'stops' => 'nullable|array',
-            'stops.*.name' => 'required_with:stops|string',
-            'stops.*.lat' => 'required_with:stops|numeric',
-            'stops.*.lng' => 'required_with:stops|numeric',
-            'distance_km' => 'nullable|numeric|min:0',
-            'estimated_duration_minutes' => 'nullable|integer|min:1',
+            'distance_km' => 'nullable|numeric',
+            'estimated_duration_minutes' => 'nullable|integer',
         ]);
         
         $route->update($validated);
@@ -98,9 +95,9 @@ class RouteController extends Controller
 
     public function destroy(Route $route)
     {
-        // Check if route is used in schedules
+        // Check if route is being used in schedules
         if ($route->schedules()->exists()) {
-            return back()->with('error', 'Cannot delete route as it is used in schedules.');
+            return back()->with('error', 'Cannot delete route as it is assigned to schedules.');
         }
         
         $route->delete();

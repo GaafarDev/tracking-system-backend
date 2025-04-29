@@ -1,21 +1,28 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
 
 const props = defineProps({
     activeDrivers: Array,
+    openIncidentsCount: Number,
+    activeSosAlertsCount: Number
 });
 
 const locations = ref(props.activeDrivers || []);
 const map = ref(null);
 const markers = ref({});
 const refreshInterval = ref(null);
+// Create reactive refs for the counts
+const openIncidentsCount = ref(props.openIncidentsCount || 0);
+const activeSosAlertsCount = ref(props.activeSosAlertsCount || 0);
 
 onMounted(() => {
     initMap();
-    refreshInterval.value = setInterval(fetchLatestLocations, 10000); // Refresh every 10 seconds
+    refreshDashboardData(); // Immediate refresh
+    refreshInterval.value = setInterval(refreshDashboardData, 10000); // Refresh every 10 seconds
+    router.reload({ only: ['stats'] });
 });
 
 onUnmounted(() => {
@@ -23,6 +30,33 @@ onUnmounted(() => {
         clearInterval(refreshInterval.value);
     }
 });
+
+// New comprehensive dashboard refresh function
+async function refreshDashboardData() {
+    try {
+        // Get locations
+        const locationsResponse = await axios.get('/api/locations/latest');
+        locations.value = locationsResponse.data;
+        
+        // Update markers
+        locations.value.forEach(location => {
+            addOrUpdateMarker(location);
+        });
+        
+        // Get updated stats
+        const statsResponse = await axios.get('/api/dashboard/stats');
+        if (statsResponse.data) {
+            // Update the counts from the response
+            openIncidentsCount.value = statsResponse.data.openIncidentsCount || 0;
+            activeSosAlertsCount.value = statsResponse.data.activeSosAlertsCount || 0;
+            
+            // Log the stats to debug
+            console.log('Updated dashboard stats:', statsResponse.data);
+        }
+    } catch (error) {
+        console.error('Error refreshing dashboard data:', error);
+    }
+}
 
 function initMap() {
     // Using Leaflet for maps
@@ -74,6 +108,7 @@ function addOrUpdateMarker(location) {
     }
 }
 
+// Keep this for backward compatibility or specific location-only updates
 async function fetchLatestLocations() {
     try {
         const response = await axios.get('/api/locations/latest');
@@ -121,8 +156,7 @@ async function fetchLatestLocations() {
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                         <div class="text-sm font-medium text-gray-500">Open Incidents</div>
                         <div class="mt-1 text-3xl font-semibold text-gray-900">
-                            <!-- To be populated from backend -->
-                            0
+                            {{ openIncidentsCount }}
                         </div>
                     </div>
                     
@@ -130,8 +164,7 @@ async function fetchLatestLocations() {
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 bg-red-50">
                         <div class="text-sm font-medium text-red-500">Active SOS Alerts</div>
                         <div class="mt-1 text-3xl font-semibold text-red-600">
-                            <!-- To be populated from backend -->
-                            0
+                            {{ activeSosAlertsCount }}
                         </div>
                     </div>
                 </div>

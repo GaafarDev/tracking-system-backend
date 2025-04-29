@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 
 use App\Models\SosAlert;
 use App\Models\Notification;
+use App\Models\Driver;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -78,4 +79,36 @@ class SosAlertController extends Controller
         
         return redirect()->back();
     }
+
+    public function send(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'message' => 'nullable|string',
+        ]);
+        
+        $user = $request->user();
+        $driver = Driver::where('user_id', $user->id)->firstOrFail();
+        
+        $sosAlert = SosAlert::create([
+            'driver_id' => $driver->id,
+            'latitude' => $validated['latitude'],
+            'longitude' => $validated['longitude'],
+            'message' => $validated['message'],
+            'status' => 'active',
+        ]);
+        
+        return response()->json([
+            'message' => 'SOS alert sent successfully',
+            'sos_alert' => $sosAlert,
+        ], 201);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Failed to send SOS alert',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 }

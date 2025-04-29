@@ -12,7 +12,7 @@ use App\Http\Controllers\API\IncidentController;
 use App\Http\Controllers\API\SosAlertController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\WeatherUpdateController;
-
+use App\Http\Controllers\API\DashboardController;
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -61,4 +61,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Weather Updates
     Route::get('/weather/latest', [WeatherUpdateController::class, 'latest']);
     Route::apiResource('weather', WeatherUpdateController::class, ['names' => 'weather-updates']);
+
+    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
 });
