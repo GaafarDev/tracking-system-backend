@@ -25,6 +25,7 @@ class DashboardController extends Controller
                     ->from('locations')
                     ->groupBy('driver_id');
             })
+            ->where('recorded_at', '>=', now()->subMinutes(30)) // Only recent locations
             ->orderBy('recorded_at', 'desc')
             ->get();
             
@@ -46,7 +47,18 @@ class DashboardController extends Controller
      */
     public function stats()
     {
-        // Force fresh count without caching
+        // Get drivers who have sent location updates in the last 30 minutes
+        $activeDriversFromLocations = Location::select('driver_id')
+            ->where('recorded_at', '>=', now()->subMinutes(30))
+            ->distinct()
+            ->count();
+            
+        // Get unique vehicles from recent locations
+        $activeVehiclesFromLocations = Location::select('vehicle_id')
+            ->where('recorded_at', '>=', now()->subMinutes(30))
+            ->distinct()
+            ->count();
+        
         $stats = [
             'drivers' => [
                 'total' => Driver::count(),
@@ -76,7 +88,9 @@ class DashboardController extends Controller
                 'total' => SosAlert::count(),
                 'active' => SosAlert::where('status', 'active')->count(),
             ],
-            // Add these fields explicitly for the dashboard
+            // Add these fields for the dashboard to show real numbers
+            'activeDriversCount' => $activeDriversFromLocations,
+            'activeVehiclesCount' => $activeVehiclesFromLocations,
             'openIncidentsCount' => Incident::whereIn('status', ['reported', 'in_progress'])->count(),
             'activeSosAlertsCount' => SosAlert::where('status', 'active')->count(),
         ];

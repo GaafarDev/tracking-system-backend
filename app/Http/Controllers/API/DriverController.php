@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log; // Add this import
 use Inertia\Inertia;
 use App\Models\Driver;
 use App\Models\User;
@@ -142,5 +143,37 @@ class DriverController extends Controller
         
         return redirect()->route('drivers.index')
             ->with('success', 'Driver deleted successfully.');
+    }
+
+    // API method for mobile app - REPLACE your existing me() method with this
+    public function me(Request $request)
+    {
+        try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json([
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            $driver = Driver::where('user_id', $user->id)->with('user')->first();
+            
+            if (!$driver) {
+                return response()->json([
+                    'message' => 'Driver profile not found'
+                ], 404);
+            }
+            
+            return response()->json($driver, 200);
+        } catch (\Exception $e) {
+            Log::error('Error fetching driver profile', [
+                'error' => $e->getMessage(),
+                'user_id' => $request->user()->id ?? 'null'
+            ]);
+            return response()->json([
+                'message' => 'Error fetching driver profile',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Http\Controllers\API; // Update this line
+namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
-
 
 use App\Models\Schedule;
 use App\Models\Driver;
@@ -16,6 +15,12 @@ class ScheduleController extends Controller
 {
     public function index(Request $request)
     {
+        // Check if this is an API request from mobile app
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return $this->handleApiRequest($request);
+        }
+        
+        // Handle web request (existing code)
         $query = Schedule::with(['route', 'driver.user', 'vehicle']);
         
         // Filter by driver if provided
@@ -53,6 +58,45 @@ class ScheduleController extends Controller
             'vehicles' => $vehicles,
             'filters' => $request->only(['driver_id', 'route_id', 'day_of_week', 'is_active']),
         ]);
+    }
+
+    private function handleApiRequest(Request $request)
+    {
+        try {
+            $user = $request->user();
+            $driver = Driver::where('user_id', $user->id)->first();
+            
+            if (!$driver) {
+                return response()->json([
+                    'message' => 'Driver not found',
+                    'data' => []
+                ], 404);
+            }
+            
+            $query = Schedule::with(['route', 'vehicle'])
+                ->where('driver_id', $driver->id);
+            
+            // Filter by day of week if provided
+            if ($request->has('day_of_week')) {
+                $query->where('day_of_week', $request->day_of_week);
+            }
+            
+            // Only active schedules for mobile app
+            $query->where('is_active', true);
+            
+            $schedules = $query->orderBy('day_of_week')
+                ->orderBy('departure_time')
+                ->get();
+            
+            return response()->json([
+                'data' => $schedules
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error fetching schedules',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function create()

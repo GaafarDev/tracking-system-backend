@@ -17,12 +17,14 @@ const refreshInterval = ref(null);
 // Create reactive refs for the counts
 const openIncidentsCount = ref(props.openIncidentsCount || 0);
 const activeSosAlertsCount = ref(props.activeSosAlertsCount || 0);
+const activeDriversCount = ref(0);
+const activeVehiclesCount = ref(0);
 
 onMounted(() => {
     initMap();
-    refreshDashboardData(); // Immediate refresh
-    refreshInterval.value = setInterval(refreshDashboardData, 10000); // Refresh every 10 seconds
-    router.reload({ only: ['stats'] });
+    // Removed the auto-refresh temporarily
+    // refreshDashboardData(); 
+    // refreshInterval.value = setInterval(refreshDashboardData, 10000);
 });
 
 onUnmounted(() => {
@@ -31,9 +33,11 @@ onUnmounted(() => {
     }
 });
 
-// New comprehensive dashboard refresh function
+// Simplified refreshDashboardData function without auto-calling
 async function refreshDashboardData() {
     try {
+        console.log('Manually refreshing dashboard data...');
+        
         // Get locations
         const locationsResponse = await axios.get('/api/locations/latest');
         locations.value = locationsResponse.data;
@@ -46,15 +50,18 @@ async function refreshDashboardData() {
         // Get updated stats
         const statsResponse = await axios.get('/api/dashboard/stats');
         if (statsResponse.data) {
-            // Update the counts from the response
+            activeDriversCount.value = statsResponse.data.activeDriversCount || 0;
+            activeVehiclesCount.value = statsResponse.data.activeVehiclesCount || 0;
             openIncidentsCount.value = statsResponse.data.openIncidentsCount || 0;
             activeSosAlertsCount.value = statsResponse.data.activeSosAlertsCount || 0;
             
-            // Log the stats to debug
             console.log('Updated dashboard stats:', statsResponse.data);
         }
     } catch (error) {
         console.error('Error refreshing dashboard data:', error);
+        if (error.response?.status === 401) {
+            console.log('Authentication required for dashboard data');
+        }
     }
 }
 
@@ -111,7 +118,16 @@ function addOrUpdateMarker(location) {
 // Keep this for backward compatibility or specific location-only updates
 async function fetchLatestLocations() {
     try {
-        const response = await axios.get('/api/locations/latest');
+        const config = {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            withCredentials: true
+        };
+        
+        const response = await axios.get('/api/locations/latest', config);
         locations.value = response.data;
         
         // Update markers
@@ -140,7 +156,7 @@ async function fetchLatestLocations() {
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                         <div class="text-sm font-medium text-gray-500">Active Drivers</div>
                         <div class="mt-1 text-3xl font-semibold text-gray-900">
-                            {{ locations.length }}
+                            {{ activeDriversCount }}
                         </div>
                     </div>
                     
@@ -148,7 +164,7 @@ async function fetchLatestLocations() {
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                         <div class="text-sm font-medium text-gray-500">Active Vehicles</div>
                         <div class="mt-1 text-3xl font-semibold text-gray-900">
-                            {{ new Set(locations.map(l => l.vehicle_id)).size }}
+                            {{ activeVehiclesCount }}
                         </div>
                     </div>
                     

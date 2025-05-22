@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Http\Controllers\API; // Update this line
+namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
-
 
 use App\Models\SosAlert;
 use App\Models\Notification;
@@ -81,34 +80,109 @@ class SosAlertController extends Controller
     }
 
     public function send(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'message' => 'nullable|string',
-        ]);
-        
-        $user = $request->user();
-        $driver = Driver::where('user_id', $user->id)->firstOrFail();
-        
-        $sosAlert = SosAlert::create([
-            'driver_id' => $driver->id,
-            'latitude' => $validated['latitude'],
-            'longitude' => $validated['longitude'],
-            'message' => $validated['message'],
-            'status' => 'active',
-        ]);
-        
-        return response()->json([
-            'message' => 'SOS alert sent successfully',
-            'sos_alert' => $sosAlert,
-        ], 201);
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Failed to send SOS alert',
-            'error' => $e->getMessage()
-        ], 500);
+    {
+        try {
+            $validated = $request->validate([
+                'latitude' => 'required|numeric',
+                'longitude' => 'required|numeric',
+                'message' => 'nullable|string',
+            ]);
+            
+            $user = $request->user();
+            $driver = Driver::where('user_id', $user->id)->firstOrFail();
+            
+            // Check if driver already has an active SOS alert
+            $existingAlert = SosAlert::where('driver_id', $driver->id)
+                ->where('status', 'active')
+                ->first();
+                
+            if ($existingAlert) {
+                return response()->json([
+                    'message' => 'You already have an active SOS alert',
+                    'sos_alert' => $existingAlert,
+                ], 400);
+            }
+            
+            $sosAlert = SosAlert::create([
+                'driver_id' => $driver->id,
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
+                'message' => $validated['message'],
+                'status' => 'active',
+            ]);
+            
+            return response()->json([
+                'message' => 'SOS alert sent successfully',
+                'sos_alert' => $sosAlert,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to send SOS alert',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
+
+    // Add this method for mobile app
+    public function getActiveSosAlert(Request $request)
+    {
+        try {
+            $user = $request->user();
+            $driver = Driver::where('user_id', $user->id)->first();
+            
+            if (!$driver) {
+                return response()->json([
+                    'message' => 'Driver not found',
+                    'sos_alert' => null
+                ], 404);
+            }
+            
+            $activeAlert = SosAlert::where('driver_id', $driver->id)
+                ->where('status', 'active')
+                ->first();
+                
+            if ($activeAlert) {
+                return response()->json([
+                    'sos_alert' => $activeAlert
+                ], 200);
+            } else {
+                return response()->json([
+                    'sos_alert' => null
+                ], 200);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error checking active SOS alert',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Add this method for mobile app
+    public function cancelSosAlert(Request $request, $id)
+    {
+        try {
+            $user = $request->user();
+            $driver = Driver::where('user_id', $user->id)->firstOrFail();
+            
+            $sosAlert = SosAlert::where('id', $id)
+                ->where('driver_id', $driver->id)
+                ->where('status', 'active')
+                ->firstOrFail();
+                
+            $sosAlert->update([
+                'status' => 'resolved',
+                'resolved_at' => now(),
+            ]);
+            
+            return response()->json([
+                'message' => 'SOS alert cancelled successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to cancel SOS alert',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

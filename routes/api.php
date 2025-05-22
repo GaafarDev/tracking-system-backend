@@ -13,8 +13,17 @@ use App\Http\Controllers\API\SosAlertController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\WeatherUpdateController;
 use App\Http\Controllers\API\DashboardController;
+
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
+
+// Add CORS preflight handling
+Route::options('{any}', function () {
+    return response('', 200)
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+})->where('any', '.*');
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -27,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     
     // Drivers
+    Route::get('/drivers/me', [DriverController::class, 'me']);
     Route::apiResource('drivers', DriverController::class);
     
     // Vehicles
@@ -49,9 +59,11 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // SOS Alerts
     Route::post('/sos/send', [SosAlertController::class, 'send']);
+    Route::get('/sos/active', [SosAlertController::class, 'getActiveSosAlert']);
+    Route::post('/sos/{id}/cancel', [SosAlertController::class, 'cancelSosAlert']);
     Route::post('/sos/{sosAlert}/respond', [SosAlertController::class, 'respond']);
     Route::post('/sos/{sosAlert}/resolve', [SosAlertController::class, 'resolve']);
-    Route::apiResource('sos', SosAlertController::class, ['names' => 'sos-alerts']);
+    Route::apiResource('sos', SosAlertController::class);
     
     // Notifications
     Route::get('/notifications/unread', [NotificationController::class, 'unread']);
@@ -60,7 +72,8 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Weather Updates
     Route::get('/weather/latest', [WeatherUpdateController::class, 'latest']);
-    Route::apiResource('weather', WeatherUpdateController::class, ['names' => 'weather-updates']);
+    Route::apiResource('weather', WeatherUpdateController::class);
 
+    // Dashboard
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
 });
