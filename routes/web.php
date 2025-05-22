@@ -25,7 +25,7 @@ Route::middleware([
     'verified',
 ])->group(function () {
     // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\API\DashboardController::class, 'index'])->name('dashboard');
     
     // Resource controllers
     Route::resource('drivers', DriverController::class);

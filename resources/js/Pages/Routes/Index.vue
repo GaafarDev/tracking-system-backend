@@ -1,8 +1,9 @@
 <script setup>
-import { ref, watch } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, watch, onMounted } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
+const page = usePage();
 const props = defineProps({
     routes: Object,
     filters: Object,
@@ -10,12 +11,17 @@ const props = defineProps({
 
 const search = ref(props.filters.search || '');
 
-// Refresh data when coming back to this page
-watch(() => route().current(), (current) => {
-  if (current === 'routes.index') {
+// Load fresh data when component mounts
+onMounted(() => {
+  router.reload({ only: ['routes'] });
+});
+
+// Replace the problematic watch with a more reliable one
+watch(() => page.url.value, (newUrl) => {
+  if (newUrl.includes('/routes')) {
     router.reload({ only: ['routes'] });
   }
-});
+}, { deep: true });
 
 // Debounce search to avoid too many requests
 let searchTimeout;
@@ -50,6 +56,12 @@ function formatDuration(minutes) {
 function getStopsCount(route) {
     if (!route.stops) return 0;
     return Array.isArray(route.stops) ? route.stops.length : 0;
+}
+
+function confirmDelete(routeItem) {
+    if (confirm(`Are you sure you want to delete the route "${routeItem.name}"?`)) {
+        router.delete(route('routes.destroy', routeItem.id));
+    }
 }
 </script>
 
@@ -92,7 +104,7 @@ function getStopsCount(route) {
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="route in props.routes.data" :key="route.id">
+                                <tr v-for="routeItem in props.routes.data" :key="routeItem.id">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -102,31 +114,31 @@ function getStopsCount(route) {
                                             </div>
                                             <div class="ml-4">
                                                 <div class="text-sm font-medium text-gray-900">
-                                                    {{ route.name }}
+                                                    {{ routeItem.name }}
                                                 </div>
                                                 <div class="text-sm text-gray-500">
-                                                    {{ route.description || 'No description' }}
+                                                    {{ routeItem.description || 'No description' }}
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ formatDistance(route.distance_km) }}</div>
+                                        <div class="text-sm text-gray-900">{{ formatDistance(routeItem.distance_km) }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ formatDuration(route.estimated_duration_minutes) }}</div>
+                                        <div class="text-sm text-gray-900">{{ formatDuration(routeItem.estimated_duration_minutes) }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ getStopsCount(route) }} stops</div>
+                                        <div class="text-sm text-gray-900">{{ getStopsCount(routeItem) }} stops</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <Link :href="route('routes.show', route.id)" class="text-blue-600 hover:text-blue-900 mr-3">
+                                        <Link :href="route('routes.show', routeItem.id)" class="text-blue-600 hover:text-blue-900 mr-3">
                                             View
                                         </Link>
-                                        <Link :href="route('routes.edit', route.id)" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                        <Link :href="route('routes.edit', routeItem.id)" class="text-indigo-600 hover:text-indigo-900 mr-3">
                                             Edit
                                         </Link>
-                                        <button @click="confirmDelete(route)" class="text-red-600 hover:text-red-900">
+                                        <button @click="confirmDelete(routeItem)" class="text-red-600 hover:text-red-900">
                                             Delete
                                         </button>
                                     </td>
