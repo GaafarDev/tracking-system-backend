@@ -14,17 +14,29 @@ const locations = ref(props.activeDrivers || []);
 const map = ref(null);
 const markers = ref({});
 const refreshInterval = ref(null);
-// Create reactive refs for the counts
-const openIncidentsCount = ref(props.openIncidentsCount || 0);
-const activeSosAlertsCount = ref(props.activeSosAlertsCount || 0);
+
+// Initialize with prop values and provide defaults
 const activeDriversCount = ref(0);
 const activeVehiclesCount = ref(0);
+const openIncidentsCount = ref(props.openIncidentsCount || 0);
+const activeSosAlertsCount = ref(props.activeSosAlertsCount || 0);
+
+// Statistics container
+const stats = ref({
+    drivers: { total: 0, active: 0, inactive: 0, on_leave: 0 },
+    vehicles: { total: 0, active: 0, maintenance: 0, inactive: 0 },
+    routes: { total: 0 },
+    schedules: { total: 0, active: 0 },
+    incidents: { total: 0, active: 0, resolved: 0 },
+    sos_alerts: { total: 0, active: 0 }
+});
 
 onMounted(() => {
     initMap();
-    // Removed the auto-refresh temporarily
-    // refreshDashboardData(); 
-    // refreshInterval.value = setInterval(refreshDashboardData, 10000);
+    // Load dashboard data immediately
+    refreshDashboardData();
+    // Set up auto-refresh every 30 seconds
+    refreshInterval.value = setInterval(refreshDashboardData, 30000);
 });
 
 onUnmounted(() => {
@@ -33,13 +45,17 @@ onUnmounted(() => {
     }
 });
 
-// Simplified refreshDashboardData function without auto-calling
 async function refreshDashboardData() {
     try {
-        console.log('Manually refreshing dashboard data...');
-        
         // Get locations
-        const locationsResponse = await axios.get('/api/locations/latest');
+        const locationsResponse = await axios.get('/api/locations/latest', {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            withCredentials: true
+        });
         locations.value = locationsResponse.data;
         
         // Update markers
@@ -48,31 +64,37 @@ async function refreshDashboardData() {
         });
         
         // Get updated stats
-        const statsResponse = await axios.get('/api/dashboard/stats');
+        const statsResponse = await axios.get('/api/dashboard/stats', {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            withCredentials: true
+        });
+        
         if (statsResponse.data) {
+            stats.value = statsResponse.data;
+            
+            // Update reactive references
             activeDriversCount.value = statsResponse.data.activeDriversCount || 0;
             activeVehiclesCount.value = statsResponse.data.activeVehiclesCount || 0;
             openIncidentsCount.value = statsResponse.data.openIncidentsCount || 0;
             activeSosAlertsCount.value = statsResponse.data.activeSosAlertsCount || 0;
-            
-            console.log('Updated dashboard stats:', statsResponse.data);
         }
     } catch (error) {
         console.error('Error refreshing dashboard data:', error);
-        if (error.response?.status === 401) {
-            console.log('Authentication required for dashboard data');
-        }
     }
 }
 
 function initMap() {
-    // Using Leaflet for maps
+    // Maps
     if (!window.L) {
         console.error('Leaflet library not loaded');
         return;
     }
     
-    map.value = L.map('map').setView([4.2105, 101.9758], 10); // Center on Malaysia
+    map.value = L.map('map').setView([4.2105, 101.9758], 10); 
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -114,30 +136,6 @@ function addOrUpdateMarker(location) {
         markers.value[driverKey] = marker;
     }
 }
-
-// Keep this for backward compatibility or specific location-only updates
-async function fetchLatestLocations() {
-    try {
-        const config = {
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            withCredentials: true
-        };
-        
-        const response = await axios.get('/api/locations/latest', config);
-        locations.value = response.data;
-        
-        // Update markers
-        locations.value.forEach(location => {
-            addOrUpdateMarker(location);
-        });
-    } catch (error) {
-        console.error('Error fetching latest locations:', error);
-    }
-}
 </script>
 
 <template>
@@ -158,6 +156,9 @@ async function fetchLatestLocations() {
                         <div class="mt-1 text-3xl font-semibold text-gray-900">
                             {{ activeDriversCount }}
                         </div>
+                        <div class="text-xs text-gray-400 mt-1">
+                            Total: {{ stats.drivers.total }}
+                        </div>
                     </div>
                     
                     <!-- Active Vehicles -->
@@ -165,6 +166,9 @@ async function fetchLatestLocations() {
                         <div class="text-sm font-medium text-gray-500">Active Vehicles</div>
                         <div class="mt-1 text-3xl font-semibold text-gray-900">
                             {{ activeVehiclesCount }}
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">
+                            Total: {{ stats.vehicles.total }}
                         </div>
                     </div>
                     
@@ -174,15 +178,37 @@ async function fetchLatestLocations() {
                         <div class="mt-1 text-3xl font-semibold text-gray-900">
                             {{ openIncidentsCount }}
                         </div>
+                        <div class="text-xs text-gray-400 mt-1">
+                            Total: {{ stats.incidents.total }}
+                        </div>
                     </div>
                     
                     <!-- Active SOS Alerts -->
-                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 bg-red-50">
-                        <div class="text-sm font-medium text-red-500">Active SOS Alerts</div>
-                        <div class="mt-1 text-3xl font-semibold text-red-600">
+                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6" 
+                         :class="{'bg-red-50': activeSosAlertsCount > 0}">
+                        <div class="text-sm font-medium" :class="activeSosAlertsCount > 0 ? 'text-red-500' : 'text-gray-500'">
+                            Active SOS Alerts
+                        </div>
+                        <div class="mt-1 text-3xl font-semibold" :class="activeSosAlertsCount > 0 ? 'text-red-600' : 'text-gray-900'">
                             {{ activeSosAlertsCount }}
                         </div>
+                        <div class="text-xs mt-1" :class="activeSosAlertsCount > 0 ? 'text-red-400' : 'text-gray-400'">
+                            Total: {{ stats.sos_alerts.total }}
+                        </div>
                     </div>
+                </div>
+                
+                <!-- Refresh Button - More subtle styling -->
+                <div class="flex justify-end mb-6">
+                    <button 
+                        @click="refreshDashboardData" 
+                        class="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm flex items-center"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh
+                    </button>
                 </div>
                 
                 <!-- Map -->
