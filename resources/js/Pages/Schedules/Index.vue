@@ -22,6 +22,7 @@
                                 type="text" 
                                 placeholder="Search schedules..." 
                                 class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                @input="handleSearchInput"
                             />
                         </div>
                         
@@ -29,6 +30,7 @@
                         <div class="w-full md:w-48">
                             <select 
                                 v-model="filterDriverId"
+                                @change="applyFiltersImmediately"
                                 class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="">All Drivers</option>
@@ -42,11 +44,12 @@
                         <div class="w-full md:w-48">
                             <select 
                                 v-model="filterRouteId"
+                                @change="applyFiltersImmediately"
                                 class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="">All Routes</option>
-                                <option v-for="route in props.routes" :key="route.id" :value="route.id">
-                                    {{ route.name }}
+                                <option v-for="routeItem in props.routes" :key="routeItem.id" :value="routeItem.id">
+                                    {{ routeItem.name }}
                                 </option>
                             </select>
                         </div>
@@ -55,6 +58,7 @@
                         <div class="w-full md:w-48">
                             <select 
                                 v-model="filterDayOfWeek"
+                                @change="applyFiltersImmediately"
                                 class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="">All Days</option>
@@ -72,12 +76,23 @@
                         <div class="w-full md:w-48">
                             <select 
                                 v-model="filterActive"
+                                @change="applyFiltersImmediately"
                                 class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="">All Statuses</option>
                                 <option value="1">Active</option>
                                 <option value="0">Inactive</option>
                             </select>
+                        </div>
+
+                        <!-- Clear Filters Button -->
+                        <div class="w-full md:w-auto">
+                            <button 
+                                @click="clearFilters"
+                                class="w-full md:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            >
+                                Clear Filters
+                            </button>
                         </div>
                     </div>
                     
@@ -120,10 +135,13 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <Link :href="route('schedules.show', schedule.id)" class="text-blue-600 hover:text-blue-900 mr-3">
+                                            View
+                                        </Link>
                                         <Link :href="route('schedules.edit', schedule.id)" class="text-indigo-600 hover:text-indigo-900 mr-3">
                                             Edit
                                         </Link>
-                                        <button class="text-red-600 hover:text-red-900">
+                                        <button @click="confirmDelete(schedule)" class="text-red-600 hover:text-red-900">
                                             Delete
                                         </button>
                                     </td>
@@ -169,8 +187,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
@@ -181,11 +199,83 @@ const props = defineProps({
     filters: Object
 });
 
-const search = ref('');
-const filterDriverId = ref(props.filters.driver_id || '');
-const filterRouteId = ref(props.filters.route_id || '');
-const filterDayOfWeek = ref(props.filters.day_of_week || '');
-const filterActive = ref(props.filters.is_active || '');
+// Initialize filters with proper defaults - Fix the active filter initialization
+const search = ref(props.filters?.search || '');
+const filterDriverId = ref(props.filters?.driver_id || '');
+const filterRouteId = ref(props.filters?.route_id || '');
+const filterDayOfWeek = ref(props.filters?.day_of_week || '');
+const filterActive = ref(props.filters?.is_active !== undefined ? String(props.filters.is_active) : '');
+
+// Debounce timer for search
+let searchTimeout;
+
+function buildFilters() {
+    const filters = {};
+    
+    if (search.value) filters.search = search.value;
+    if (filterDriverId.value) filters.driver_id = filterDriverId.value;
+    if (filterRouteId.value) filters.route_id = filterRouteId.value;
+    if (filterDayOfWeek.value) filters.day_of_week = filterDayOfWeek.value;
+    
+    // Fix: Convert string values to proper types for the backend
+    if (filterActive.value !== '') {
+        filters.is_active = filterActive.value === '1' ? 1 : 0;
+    }
+    
+    return filters;
+}
+
+function applyFiltersImmediately() {
+    const filters = buildFilters();
+    
+    router.get(route('schedules.index'), filters, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        only: ['schedules', 'drivers', 'routes', 'vehicles', 'filters']
+    });
+}
+
+function handleSearchInput() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        applyFiltersImmediately();
+    }, 250);
+}
+
+function clearFilters() {
+    search.value = '';
+    filterDriverId.value = '';
+    filterRouteId.value = '';
+    filterDayOfWeek.value = '';
+    filterActive.value = '';
+    
+    router.get(route('schedules.index'), {}, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        only: ['schedules', 'drivers', 'routes', 'vehicles', 'filters']
+    });
+}
+
+function confirmDelete(schedule) {
+    if (confirm(`Are you sure you want to delete this schedule?`)) {
+        router.delete(route('schedules.destroy', schedule.id), {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                // Maintain current filters after deletion
+                const filters = buildFilters();
+                router.get(route('schedules.index'), filters, {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                    only: ['schedules', 'drivers', 'routes', 'vehicles', 'filters']
+                });
+            }
+        });
+    }
+}
 
 function formatTime(time) {
     if (!time) return 'N/A';

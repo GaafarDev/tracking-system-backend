@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
@@ -9,12 +9,52 @@ const props = defineProps({
 });
 
 const search = ref(props.filters.search || '');
-const filterType = ref(props.filters.type || 'all');
-const filterStatus = ref(props.filters.status || 'all');
+const filterType = ref(props.filters.type || '');
+const filterStatus = ref(props.filters.status || '');
 const dateRange = ref({
     from: props.filters.from_date || '',
     to: props.filters.to_date || ''
 });
+
+// Debounce timer for search
+let searchTimeout;
+
+function applyFilters() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        const filters = {
+            search: search.value,
+            type: filterType.value,
+            status: filterStatus.value,
+            from_date: dateRange.value.from,
+            to_date: dateRange.value.to
+        };
+
+        // Remove empty filters
+        Object.keys(filters).forEach(key => {
+            if (!filters[key]) {
+                delete filters[key];
+            }
+        });
+
+        router.get(route('incidents.index'), filters, {
+            preserveState: true,
+            replace: true,
+        });
+    }, 300);
+}
+
+function clearFilters() {
+    search.value = '';
+    filterType.value = '';
+    filterStatus.value = '';
+    dateRange.value = { from: '', to: '' };
+    
+    router.get(route('incidents.index'), {}, {
+        preserveState: true,
+        replace: true,
+    });
+}
 
 function getStatusColor(status) {
     switch (status) {
@@ -107,21 +147,23 @@ function formatIncidentType(type) {
                 
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                     <!-- Search and Filters -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
                         <div>
                             <input 
                                 v-model="search" 
                                 type="text" 
                                 placeholder="Search incidents..." 
                                 class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                @input="applyFilters"
                             />
                         </div>
                         <div>
                             <select 
                                 v-model="filterType"
+                                @change="applyFilters"
                                 class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
-                                <option value="all">All Types</option>
+                                <option value="">All Types</option>
                                 <option value="accident">Accident</option>
                                 <option value="breakdown">Breakdown</option>
                                 <option value="road_obstruction">Road Obstruction</option>
@@ -132,9 +174,10 @@ function formatIncidentType(type) {
                         <div>
                             <select 
                                 v-model="filterStatus"
+                                @change="applyFilters"
                                 class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
-                                <option value="all">All Statuses</option>
+                                <option value="">All Statuses</option>
                                 <option value="reported">Reported</option>
                                 <option value="in_progress">In Progress</option>
                                 <option value="resolved">Resolved</option>
@@ -146,12 +189,22 @@ function formatIncidentType(type) {
                                 v-model="dateRange.from" 
                                 type="date" 
                                 class="w-1/2 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                @change="applyFilters"
                             />
                             <input 
                                 v-model="dateRange.to" 
                                 type="date" 
                                 class="w-1/2 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                @change="applyFilters"
                             />
+                        </div>
+                        <div>
+                            <button 
+                                @click="clearFilters"
+                                class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            >
+                                Clear Filters
+                            </button>
                         </div>
                     </div>
                     
