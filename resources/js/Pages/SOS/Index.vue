@@ -1,16 +1,31 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
 
 const props = defineProps({
     sosAlerts: Object,
+    filters: Object, // Add filters prop
 });
 
 const refreshInterval = ref(null);
 const map = ref(null);
 const markers = ref({});
+
+// Initialize filters with props
+const search = ref(props.filters?.search || '');
+const filterStatus = ref(props.filters?.status || 'all');
+const filterDriver = ref(props.filters?.driver_id || 'all');
+
+// Watch for filter changes
+let searchTimeout;
+watch([search, filterStatus, filterDriver], ([newSearch, newStatus, newDriver]) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        applyFilters();
+    }, 300);
+});
 
 onMounted(() => {
     if (hasActiveSosAlerts()) {
@@ -125,6 +140,33 @@ if (typeof window !== 'undefined') {
     window.resolveSos = resolveSos;
 }
 
+// Add filter methods
+function applyFilters() {
+    const filters = {};
+    
+    if (search.value) filters.search = search.value;
+    if (filterStatus.value !== 'all') filters.status = filterStatus.value;
+    if (filterDriver.value !== 'all') filters.driver_id = filterDriver.value;
+    
+    router.get(route('sos.index'), filters, {
+        preserveState: true,
+        replace: true,
+        only: ['sosAlerts']
+    });
+}
+
+function clearFilters() {
+    search.value = '';
+    filterStatus.value = 'all';
+    filterDriver.value = 'all';
+    
+    router.get(route('sos.index'), {}, {
+        preserveState: true,
+        replace: true,
+        only: ['sosAlerts']
+    });
+}
+
 function formatDate(dateString) {
     const date = new Date(dateString);
     return date.toLocaleString();
@@ -181,6 +223,48 @@ function getStatusColor(status) {
                 <div v-if="hasActiveSosAlerts()" class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 mb-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Active SOS Alert Locations</h3>
                     <div id="sos-map" class="w-full h-[400px] rounded-lg"></div>
+                </div>
+                
+                <!-- Search and Filters -->
+                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div>
+                            <input 
+                                v-model="search" 
+                                type="text" 
+                                placeholder="Search SOS alerts..." 
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div>
+                            <select 
+                                v-model="filterStatus"
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="all">All Statuses</option>
+                                <option value="active">Active</option>
+                                <option value="responded">Responded</option>
+                                <option value="resolved">Resolved</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select 
+                                v-model="filterDriver"
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="all">All Drivers</option>
+                                <!-- You'll need to add drivers data from backend -->
+                            </select>
+                        </div>
+                        <div>
+                            <button 
+                                @click="clearFilters"
+                                class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            >
+                                Clear Filters
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- SOS Alerts Table -->

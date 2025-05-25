@@ -38,9 +38,31 @@ class ScheduleController extends Controller
             $query->where('day_of_week', $request->day_of_week);
         }
         
-        // Filter by active status if provided
+        // Filter by active status if provided - improved boolean handling
         if ($request->has('is_active')) {
-            $query->where('is_active', $request->is_active === 'true');
+            $isActive = $request->is_active;
+            // Handle different boolean representations
+            if ($isActive === true || $isActive === 'true' || $isActive === '1' || $isActive === 1) {
+                $query->where('is_active', true);
+            } elseif ($isActive === false || $isActive === 'false' || $isActive === '0' || $isActive === 0) {
+                $query->where('is_active', false);
+            }
+        }
+        
+        // Add search functionality for web requests
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('route', function($routeQuery) use ($search) {
+                    $routeQuery->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('driver.user', function($driverQuery) use ($search) {
+                    $driverQuery->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('vehicle', function($vehicleQuery) use ($search) {
+                    $vehicleQuery->where('plate_number', 'like', "%{$search}%");
+                });
+            });
         }
         
         $schedules = $query->orderBy('day_of_week')
@@ -56,13 +78,14 @@ class ScheduleController extends Controller
             'drivers' => $drivers,
             'routes' => $routes,
             'vehicles' => $vehicles,
-            'filters' => $request->only(['driver_id', 'route_id', 'day_of_week', 'is_active']),
+            'filters' => $request->only(['driver_id', 'route_id', 'day_of_week', 'is_active', 'search']),
         ]);
     }
 
     private function handleApiRequest(Request $request)
     {
         try {
+            // Get driver ID from authenticated user
             $user = $request->user();
             $driver = Driver::where('user_id', $user->id)->first();
             
@@ -81,8 +104,19 @@ class ScheduleController extends Controller
                 $query->where('day_of_week', $request->day_of_week);
             }
             
-            // Only active schedules for mobile app
-            $query->where('is_active', true);
+            // Filter by active status if provided - improved boolean handling
+            if ($request->has('is_active')) {
+                $isActive = $request->is_active;
+                // Handle different boolean representations
+                if ($isActive === true || $isActive === 'true' || $isActive === '1' || $isActive === 1) {
+                    $query->where('is_active', true);
+                } elseif ($isActive === false || $isActive === 'false' || $isActive === '0' || $isActive === 0) {
+                    $query->where('is_active', false);
+                }
+            } else {
+                // Only active schedules for mobile app by default
+                $query->where('is_active', true);
+            }
             
             $schedules = $query->orderBy('day_of_week')
                 ->orderBy('departure_time')

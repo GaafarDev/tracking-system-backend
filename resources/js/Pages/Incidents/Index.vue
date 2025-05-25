@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
@@ -8,35 +8,34 @@ const props = defineProps({
     filters: Object,
 });
 
-const search = ref(props.filters.search || '');
-const filterType = ref(props.filters.type || '');
-const filterStatus = ref(props.filters.status || '');
+const search = ref(props.filters?.search || '');
+const filterType = ref(props.filters?.type || '');
+const filterStatus = ref(props.filters?.status || '');
 const dateRange = ref({
-    from: props.filters.from_date || '',
-    to: props.filters.to_date || ''
+    from: props.filters?.from_date || '',
+    to: props.filters?.to_date || ''
 });
 
 // Debounce timer for search
 let searchTimeout;
 
+function buildFilters() {
+    const filters = {};
+    
+    if (search.value) filters.search = search.value;
+    if (filterType.value) filters.type = filterType.value;
+    if (filterStatus.value) filters.status = filterStatus.value;
+    if (dateRange.value.from) filters.from_date = dateRange.value.from;
+    if (dateRange.value.to) filters.to_date = dateRange.value.to;
+    
+    return filters;
+}
+
 function applyFilters() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-        const filters = {
-            search: search.value,
-            type: filterType.value,
-            status: filterStatus.value,
-            from_date: dateRange.value.from,
-            to_date: dateRange.value.to
-        };
-
-        // Remove empty filters
-        Object.keys(filters).forEach(key => {
-            if (!filters[key]) {
-                delete filters[key];
-            }
-        });
-
+        const filters = buildFilters();
+        
         router.get(route('incidents.index'), filters, {
             preserveState: true,
             replace: true,
@@ -96,6 +95,11 @@ function formatDate(dateString) {
 function formatIncidentType(type) {
     return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
+
+// Auto-apply filters when values change
+watch([search], () => applyFilters());
+watch([filterType, filterStatus], () => applyFilters());
+watch([() => dateRange.value.from, () => dateRange.value.to], () => applyFilters());
 </script>
 
 <template>
@@ -111,9 +115,25 @@ function formatIncidentType(type) {
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Stats Overview -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                    <!-- Reported Incidents -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+                    <!-- All Incidents -->
+                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 border-l-4 border-gray-500">
+                        <div class="text-sm font-medium text-gray-500">All</div>
+                        <div class="mt-1 text-3xl font-semibold text-gray-900">
+                            {{ props.incidents.total }}
+                        </div>
+                    </div>
+                    
+                    <!-- Active (Reported + In Progress) -->
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 border-l-4 border-red-500">
+                        <div class="text-sm font-medium text-gray-500">Active</div>
+                        <div class="mt-1 text-3xl font-semibold text-gray-900">
+                            {{ props.incidents.data.filter(i => i.status === 'reported' || i.status === 'in_progress').length }}
+                        </div>
+                    </div>
+                    
+                    <!-- Reported -->
+                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 border-l-4 border-orange-500">
                         <div class="text-sm font-medium text-gray-500">Reported</div>
                         <div class="mt-1 text-3xl font-semibold text-gray-900">
                             {{ props.incidents.data.filter(i => i.status === 'reported').length }}
@@ -129,38 +149,28 @@ function formatIncidentType(type) {
                     </div>
                     
                     <!-- Resolved -->
-                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 border-l-4 border-blue-500">
+                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 border-l-4 border-green-500">
                         <div class="text-sm font-medium text-gray-500">Resolved</div>
                         <div class="mt-1 text-3xl font-semibold text-gray-900">
-                            {{ props.incidents.data.filter(i => i.status === 'resolved').length }}
-                        </div>
-                    </div>
-                    
-                    <!-- Closed -->
-                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 border-l-4 border-green-500">
-                        <div class="text-sm font-medium text-gray-500">Closed</div>
-                        <div class="mt-1 text-3xl font-semibold text-gray-900">
-                            {{ props.incidents.data.filter(i => i.status === 'closed').length }}
+                            {{ props.incidents.data.filter(i => i.status === 'resolved' || i.status === 'closed').length }}
                         </div>
                     </div>
                 </div>
                 
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                     <!-- Search and Filters -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
                         <div>
                             <input 
                                 v-model="search" 
                                 type="text" 
                                 placeholder="Search incidents..." 
                                 class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                @input="applyFilters"
                             />
                         </div>
                         <div>
                             <select 
                                 v-model="filterType"
-                                @change="applyFilters"
                                 class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="">All Types</option>
@@ -174,28 +184,30 @@ function formatIncidentType(type) {
                         <div>
                             <select 
                                 v-model="filterStatus"
-                                @change="applyFilters"
                                 class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="">All Statuses</option>
+                                <option value="active">Active (Reported + In Progress)</option>
                                 <option value="reported">Reported</option>
                                 <option value="in_progress">In Progress</option>
                                 <option value="resolved">Resolved</option>
                                 <option value="closed">Closed</option>
                             </select>
                         </div>
-                        <div class="flex gap-2">
+                        <div>
                             <input 
                                 v-model="dateRange.from" 
                                 type="date" 
-                                class="w-1/2 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                @change="applyFilters"
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="From date"
                             />
+                        </div>
+                        <div>
                             <input 
                                 v-model="dateRange.to" 
                                 type="date" 
-                                class="w-1/2 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                @change="applyFilters"
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="To date"
                             />
                         </div>
                         <div>

@@ -9,29 +9,22 @@ const props = defineProps({
     filters: Object,
 });
 
-const search = ref(props.filters.search || '');
+// Initialize filters with props
+const search = ref(props.filters?.search || '');
+const filterDistance = ref(props.filters?.distance || 'all');
+const filterStops = ref(props.filters?.stops || 'all');
 
 // Load fresh data when component mounts
 onMounted(() => {
-  router.reload({ only: ['routes'] });
+    router.reload({ only: ['routes'] });
 });
 
-// Replace the problematic watch with a more reliable one
-watch(() => page.url.value, (newUrl) => {
-  if (newUrl.includes('/routes')) {
-    router.reload({ only: ['routes'] });
-  }
-}, { deep: true });
-
-// Debounce search to avoid too many requests
+// Watch for filter changes with debounce
 let searchTimeout;
-watch(search, (value) => {
+watch([search, filterDistance, filterStops], ([newSearch, newDistance, newStops]) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-        router.get(route('routes.index'), { search: value }, {
-            preserveState: true,
-            replace: true,
-        });
+        applyFilters();
     }, 300);
 });
 
@@ -63,6 +56,32 @@ function confirmDelete(routeItem) {
         router.delete(route('routes.destroy', routeItem.id));
     }
 }
+
+function applyFilters() {
+    const filters = {};
+    
+    if (search.value) filters.search = search.value;
+    if (filterDistance.value !== 'all') filters.distance = filterDistance.value;
+    if (filterStops.value !== 'all') filters.stops = filterStops.value;
+    
+    router.get(route('routes.index'), filters, {
+        preserveState: true,
+        replace: true,
+        only: ['routes']
+    });
+}
+
+function clearFilters() {
+    search.value = '';
+    filterDistance.value = 'all';
+    filterStops.value = 'all';
+    
+    router.get(route('routes.index'), {}, {
+        preserveState: true,
+        replace: true,
+        only: ['routes']
+    });
+}
 </script>
 
 <template>
@@ -81,14 +100,46 @@ function confirmDelete(routeItem) {
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                    <!-- Search -->
-                    <div class="mb-6">
-                        <input 
-                            v-model="search" 
-                            type="text" 
-                            placeholder="Search routes..." 
-                            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
+                    <!-- Search and Filters -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div>
+                            <input 
+                                v-model="search" 
+                                type="text" 
+                                placeholder="Search routes..." 
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div>
+                            <select 
+                                v-model="filterDistance"
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="all">All Distances</option>
+                                <option value="short">Short (< 10km)</option>
+                                <option value="medium">Medium (10-50km)</option>
+                                <option value="long">Long (> 50km)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select 
+                                v-model="filterStops"
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="all">All Stop Counts</option>
+                                <option value="few">Few (1-3 stops)</option>
+                                <option value="medium">Medium (4-7 stops)</option>
+                                <option value="many">Many (8+ stops)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button 
+                                @click="clearFilters"
+                                class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            >
+                                Clear Filters
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- Routes Table -->

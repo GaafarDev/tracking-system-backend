@@ -14,16 +14,22 @@ class IncidentController extends Controller
     {
         $query = Incident::with('driver.user');
         
-        // Apply filters
-        if ($request->has('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+        // Apply status filter - FIX: Handle 'active' status properly
+        if ($request->has('status') && $request->status !== 'all' && $request->status !== '') {
+            if ($request->status === 'active') {
+                // 'active' means both reported and in_progress
+                $query->whereIn('status', ['reported', 'in_progress']);
+            } else {
+                $query->where('status', $request->status);
+            }
         }
         
-        if ($request->has('type') && $request->type !== 'all') {
+        // Apply type filter - FIX: Ensure proper filtering
+        if ($request->has('type') && $request->type !== 'all' && $request->type !== '') {
             $query->where('type', $request->type);
         }
         
-        // Apply date range filter
+        // Apply date range filter - FIX: Handle date filtering properly
         if ($request->has('from_date') && $request->from_date) {
             $query->whereDate('created_at', '>=', $request->from_date);
         }
@@ -32,11 +38,12 @@ class IncidentController extends Controller
             $query->whereDate('created_at', '<=', $request->to_date);
         }
         
-        // Apply search
-        if ($request->has('search')) {
+        // Apply search - FIX: Improve search functionality
+        if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('description', 'like', "%{$search}%")
+                  ->orWhere('type', 'like', "%{$search}%")
                   ->orWhereHas('driver.user', function($q) use ($search) {
                       $q->where('name', 'like', "%{$search}%");
                   });
@@ -53,6 +60,7 @@ class IncidentController extends Controller
         ]);
     }
 
+    // ... rest of your existing methods remain the same
     public function create()
     {
         return Inertia::render('Incidents/Create');

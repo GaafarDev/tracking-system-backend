@@ -217,9 +217,14 @@ function buildFilters() {
     if (filterRouteId.value) filters.route_id = filterRouteId.value;
     if (filterDayOfWeek.value) filters.day_of_week = filterDayOfWeek.value;
     
-    // Fix: Convert string values to proper types for the backend
+    // Properly handle boolean values for is_active filter
     if (filterActive.value !== '') {
-        filters.is_active = filterActive.value === '1' ? 1 : 0;
+        // Convert string to proper boolean/integer for backend
+        if (filterActive.value === '1' || filterActive.value === 'true') {
+            filters.is_active = true;
+        } else if (filterActive.value === '0' || filterActive.value === 'false') {
+            filters.is_active = false;
+        }
     }
     
     return filters;

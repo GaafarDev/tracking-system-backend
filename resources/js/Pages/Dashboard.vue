@@ -88,23 +88,38 @@ async function refreshDashboardData() {
 }
 
 function initMap() {
-    // Maps
+    // Check if Leaflet is available
     if (!window.L) {
         console.error('Leaflet library not loaded');
         return;
     }
     
-    map.value = L.map('map').setView([4.2105, 101.9758], 10); 
+    // Initialize map with better settings
+    map.value = L.map('map', {
+        center: [4.2105, 101.9758],
+        zoom: 10,
+        zoomControl: true,
+        attributionControl: true
+    });
     
+    // Add tile layer with better styling
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+        minZoom: 5
     }).addTo(map.value);
     
-    // Add initial markers
-    if (locations.value.length > 0) {
+    // Add initial markers for existing locations
+    if (locations.value && locations.value.length > 0) {
         locations.value.forEach(location => {
             addOrUpdateMarker(location);
         });
+        
+        // Fit map to show all markers
+        if (Object.keys(markers.value).length > 0) {
+            const group = new L.featureGroup(Object.values(markers.value));
+            map.value.fitBounds(group.getBounds().pad(0.1));
+        }
     }
 }
 
@@ -115,21 +130,60 @@ function addOrUpdateMarker(location) {
     const vehicleInfo = location.vehicle?.plate_number || 'Unknown Vehicle';
     const timeInfo = new Date(location.recorded_at).toLocaleTimeString();
     
-    // Create marker popup content
+    // Create custom icon for better visibility
+    const driverIcon = L.divIcon({
+        html: `
+            <div style="
+                background-color: #3b82f6;
+                border: 3px solid white;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                color: white;
+                font-weight: bold;
+                font-size: 12px;
+            ">
+                🚗
+            </div>
+        `,
+        className: 'driver-marker',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+        popupAnchor: [0, -12]
+    });
+    
+    // Create enhanced popup content
     const popupContent = `
-        <div class="font-medium">${driverName}</div>
-        <div>Vehicle: ${vehicleInfo}</div>
-        <div>Last updated: ${timeInfo}</div>
-        <div>Speed: ${location.speed ? location.speed + ' km/h' : 'N/A'}</div>
+        <div style="min-width: 200px;">
+            <div style="font-weight: bold; font-size: 14px; margin-bottom: 5px; color: #1f2937;">
+                ${driverName}
+            </div>
+            <div style="margin-bottom: 3px;">
+                <strong>Vehicle:</strong> ${vehicleInfo}
+            </div>
+            <div style="margin-bottom: 3px;">
+                <strong>Last Update:</strong> ${timeInfo}
+            </div>
+            <div style="margin-bottom: 3px;">
+                <strong>Speed:</strong> ${location.speed ? Math.round(location.speed * 3.6) + ' km/h' : 'N/A'}
+            </div>
+            <div style="margin-bottom: 3px;">
+                <strong>Location:</strong> ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}
+            </div>
+        </div>
     `;
     
     if (markers.value[driverKey]) {
-        // Update existing marker
+        // Update existing marker position and popup
         markers.value[driverKey].setLatLng(position);
         markers.value[driverKey].getPopup().setContent(popupContent);
     } else {
         // Create new marker
-        const marker = L.marker(position)
+        const marker = L.marker(position, { icon: driverIcon })
             .addTo(map.value)
             .bindPopup(popupContent);
             
