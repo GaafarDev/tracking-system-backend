@@ -6,7 +6,8 @@ import axios from 'axios';
 
 const props = defineProps({
     sosAlerts: Object,
-    filters: Object, // Add filters prop
+    drivers: Array, // Add drivers prop
+    filters: Object,
 });
 
 const refreshInterval = ref(null);
@@ -17,15 +18,19 @@ const markers = ref({});
 const search = ref(props.filters?.search || '');
 const filterStatus = ref(props.filters?.status || 'all');
 const filterDriver = ref(props.filters?.driver_id || 'all');
+const dateRange = ref({
+    from: props.filters?.from_date || '',
+    to: props.filters?.to_date || ''
+});
 
 // Watch for filter changes
 let searchTimeout;
-watch([search, filterStatus, filterDriver], ([newSearch, newStatus, newDriver]) => {
+watch([search, filterStatus, filterDriver, () => dateRange.value], ([newSearch, newStatus, newDriver, newDateRange]) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
         applyFilters();
     }, 300);
-});
+}, { deep: true });
 
 onMounted(() => {
     if (hasActiveSosAlerts()) {
@@ -140,13 +145,15 @@ if (typeof window !== 'undefined') {
     window.resolveSos = resolveSos;
 }
 
-// Add filter methods
+// Update applyFilters function
 function applyFilters() {
     const filters = {};
     
     if (search.value) filters.search = search.value;
     if (filterStatus.value !== 'all') filters.status = filterStatus.value;
     if (filterDriver.value !== 'all') filters.driver_id = filterDriver.value;
+    if (dateRange.value.from) filters.from_date = dateRange.value.from;
+    if (dateRange.value.to) filters.to_date = dateRange.value.to;
     
     router.get(route('sos.index'), filters, {
         preserveState: true,
@@ -159,6 +166,7 @@ function clearFilters() {
     search.value = '';
     filterStatus.value = 'all';
     filterDriver.value = 'all';
+    dateRange.value = { from: '', to: '' };
     
     router.get(route('sos.index'), {}, {
         preserveState: true,
@@ -227,7 +235,7 @@ function getStatusColor(status) {
                 
                 <!-- Search and Filters -->
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 mb-6">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
                         <div>
                             <input 
                                 v-model="search" 
@@ -253,8 +261,26 @@ function getStatusColor(status) {
                                 class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="all">All Drivers</option>
-                                <!-- You'll need to add drivers data from backend -->
+                                <option v-for="driver in props.drivers" :key="driver.id" :value="driver.id">
+                                    {{ driver.user.name }}
+                                </option>
                             </select>
+                        </div>
+                        <div>
+                            <input 
+                                v-model="dateRange.from" 
+                                type="date" 
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="From date"
+                            />
+                        </div>
+                        <div>
+                            <input 
+                                v-model="dateRange.to" 
+                                type="date" 
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="To date"
+                            />
                         </div>
                         <div>
                             <button 

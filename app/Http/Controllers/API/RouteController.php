@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 
-use App\Models\Route;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Route;
 
 class RouteController extends Controller
 {
@@ -13,30 +13,55 @@ class RouteController extends Controller
     {
         $query = Route::query();
         
-        // Apply search if provided
-        if ($request->has('search') && !empty($request->search)) {
+        // Apply search filter
+        if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('start_location', 'like', "%{$search}%")
+                  ->orWhere('end_location', 'like', "%{$search}%");
             });
         }
         
-        // Get routes with pagination
-        $routes = $query->orderBy('name')
-            ->paginate(10)
-            ->withQueryString();
+        // Apply distance filter
+        if ($request->has('distance') && $request->distance !== 'all') {
+            switch ($request->distance) {
+                case 'short':
+                    $query->where('distance_km', '<', 10);
+                    break;
+                case 'medium':
+                    $query->whereBetween('distance_km', [10, 50]);
+                    break;
+                case 'long':
+                    $query->where('distance_km', '>', 50);
+                    break;
+            }
+        }
         
-        // Debug information
-        \Log::info('Routes query executed', [
-            'count' => $routes->count(),
-            'total' => $routes->total(),
-            'search' => $request->search ?? 'none'
-        ]);
+        // Apply stops filter
+        if ($request->has('stops') && $request->stops !== 'all') {
+            switch ($request->stops) {
+                case 'few':
+                    $query->whereRaw('JSON_LENGTH(COALESCE(stops, "[]")) BETWEEN 1 AND 3');
+                    break;
+                case 'medium':
+                    $query->whereRaw('JSON_LENGTH(COALESCE(stops, "[]")) BETWEEN 4 AND 7');
+                    break;
+                case 'many':
+                    $query->whereRaw('JSON_LENGTH(COALESCE(stops, "[]")) >= 8');
+                    break;
+                case 'none':
+                    $query->whereRaw('JSON_LENGTH(COALESCE(stops, "[]")) = 0');
+                    break;
+            }
+        }
+        
+        $routes = $query->orderBy('name')->paginate(20)->withQueryString();
         
         return Inertia::render('Routes/Index', [
             'routes' => $routes,
-            'filters' => $request->only(['search']),
+            'filters' => $request->only(['search', 'distance', 'stops']),
         ]);
     }
 
@@ -49,13 +74,16 @@ class RouteController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'start_location' => 'required|string|max:255',
+            'end_location' => 'required|string|max:255',
             'description' => 'nullable|string',
             'waypoints' => 'nullable|array',
             'stops' => 'nullable|array',
-            'distance_km' => 'nullable|numeric',
-            'estimated_duration_minutes' => 'nullable|integer',
+            'distance_km' => 'nullable|numeric|min:0',
+            'estimated_duration_minutes' => 'nullable|integer|min:1',
         ]);
         
+        // No need to manually encode JSON - model casting handles it
         $route = Route::create($validated);
         
         return redirect()->route('routes.index')
@@ -64,6 +92,7 @@ class RouteController extends Controller
 
     public function show(Route $route)
     {
+        // Model casting automatically handles JSON decoding
         return Inertia::render('Routes/Show', [
             'route' => $route,
         ]);
@@ -71,6 +100,7 @@ class RouteController extends Controller
 
     public function edit(Route $route)
     {
+        // Model casting automatically handles JSON decoding
         return Inertia::render('Routes/Edit', [
             'route' => $route,
         ]);
@@ -80,13 +110,16 @@ class RouteController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'start_location' => 'required|string|max:255',
+            'end_location' => 'required|string|max:255',
             'description' => 'nullable|string',
             'waypoints' => 'nullable|array',
             'stops' => 'nullable|array',
-            'distance_km' => 'nullable|numeric',
-            'estimated_duration_minutes' => 'nullable|integer',
+            'distance_km' => 'nullable|numeric|min:0',
+            'estimated_duration_minutes' => 'nullable|integer|min:1',
         ]);
         
+        // No need to manually encode JSON - model casting handles it
         $route->update($validated);
         
         return redirect()->route('routes.index')
@@ -95,7 +128,7 @@ class RouteController extends Controller
 
     public function destroy(Route $route)
     {
-        // Check if route is being used in schedules
+        // Check if route is being used in any schedules
         if ($route->schedules()->exists()) {
             return back()->with('error', 'Cannot delete route as it is assigned to schedules.');
         }

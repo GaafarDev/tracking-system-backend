@@ -11,6 +11,8 @@ class Route extends Model
 
     protected $fillable = [
         'name',
+        'start_location',
+        'end_location',
         'description',
         'waypoints',
         'stops',
@@ -19,8 +21,8 @@ class Route extends Model
     ];
 
     protected $casts = [
-        'waypoints' => 'array',
-        'stops' => 'array',
+        'distance_km' => 'decimal:2',
+        'estimated_duration_minutes' => 'integer',
     ];
 
     public function schedules()
