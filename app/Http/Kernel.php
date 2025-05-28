@@ -70,6 +70,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'cors' => \Illuminate\Http\Middleware\HandleCors::class,
-        'api.debug' => \App\Http\Middleware\ApiDebugMiddleware::class, // Add this line
+        'api.debug' => \App\Http\Middleware\ApiDebugMiddleware::class,
+        'admin' => \App\Http\Middleware\AdminMiddleware::class, // Make sure this line exists
     ];
 }

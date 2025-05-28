@@ -12,10 +12,13 @@ use App\Models\SosAlert;
 use App\Models\Location;
 use App\Models\Route;
 use App\Models\Schedule;
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
+    // Remove the constructor and add the admin middleware to routes instead
+
     public function index()
     {
         // Get active drivers with latest locations
@@ -38,7 +41,8 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard', [
             'activeDrivers' => $latestLocations,
             'openIncidentsCount' => $openIncidents,
-            'activeSosAlertsCount' => $activeSosAlerts
+            'activeSosAlertsCount' => $activeSosAlerts,
+            'activeDriversCount' => $latestLocations->count(), // Make sure this is passed
         ]);
     }
     
@@ -60,6 +64,9 @@ class DashboardController extends Controller
             ->count();
         
         $stats = [
+            'admins' => [
+                'total' => User::where('role', 'admin')->count(),
+            ],
             'drivers' => [
                 'total' => Driver::count(),
                 'active' => Driver::where('status', 'active')->count(),

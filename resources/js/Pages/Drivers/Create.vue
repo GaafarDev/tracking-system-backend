@@ -9,6 +9,24 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+                    <div class="mb-6 bg-blue-50 border border-blue-200 rounded-md p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-blue-800">
+                                    Account Creation Notice
+                                </h3>
+                                <div class="mt-2 text-sm text-blue-700">
+                                    <p>A random secure password will be automatically generated and sent to the driver's email address along with their login credentials.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <form @submit.prevent="submit">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Name -->
@@ -90,32 +108,6 @@
                                 </select>
                                 <InputError :message="form.errors.status" class="mt-2" />
                             </div>
-
-                            <!-- Password -->
-                            <div>
-                                <InputLabel for="password" value="Password" />
-                                <TextInput
-                                    id="password"
-                                    v-model="form.password"
-                                    type="password"
-                                    class="mt-1 block w-full"
-                                    required
-                                />
-                                <InputError :message="form.errors.password" class="mt-2" />
-                            </div>
-
-                            <!-- Password Confirmation -->
-                            <div>
-                                <InputLabel for="password_confirmation" value="Confirm Password" />
-                                <TextInput
-                                    id="password_confirmation"
-                                    v-model="form.password_confirmation"
-                                    type="password"
-                                    class="mt-1 block w-full"
-                                    required
-                                />
-                                <InputError :message="form.errors.password_confirmation" class="mt-2" />
-                            </div>
                         </div>
 
                         <div class="flex items-center justify-end mt-6">
@@ -150,9 +142,8 @@ const form = useForm({
     license_number: '',
     phone_number: '',
     address: '',
-    status: 'active',
-    password: '',
-    password_confirmation: ''
+    status: 'active'
+    // Removed password and password_confirmation fields
 });
 
 const submit = () => {

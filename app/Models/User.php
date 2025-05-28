@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role', // Add this
     ];
 
     protected $hidden = [
@@ -41,5 +42,16 @@ class User extends Authenticatable
     public function driver()
     {
         return $this->hasOne(Driver::class);
+    }
+
+    // Add helper methods for role checking
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isDriver()
+    {
+        return $this->role === 'driver';
     }
 }

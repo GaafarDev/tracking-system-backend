@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
@@ -7,7 +7,8 @@ import axios from 'axios';
 const props = defineProps({
     activeDrivers: Array,
     openIncidentsCount: Number,
-    activeSosAlertsCount: Number
+    activeSosAlertsCount: Number,
+    activeDriversCount: Number
 });
 
 const locations = ref(props.activeDrivers || []);
@@ -16,26 +17,24 @@ const markers = ref({});
 const refreshInterval = ref(null);
 
 // Initialize with prop values and provide defaults
-const activeDriversCount = ref(0);
+const activeDriversCount = ref(props.activeDriversCount || 0);
 const activeVehiclesCount = ref(0);
 const openIncidentsCount = ref(props.openIncidentsCount || 0);
 const activeSosAlertsCount = ref(props.activeSosAlertsCount || 0);
 
-// Statistics container
-const stats = ref({
-    drivers: { total: 0, active: 0, inactive: 0, on_leave: 0 },
-    vehicles: { total: 0, active: 0, maintenance: 0, inactive: 0 },
-    routes: { total: 0 },
-    schedules: { total: 0, active: 0 },
-    incidents: { total: 0, active: 0, resolved: 0 },
-    sos_alerts: { total: 0, active: 0 }
-});
-
-onMounted(() => {
-    initMap();
-    // Load dashboard data immediately
-    refreshDashboardData();
-    // Set up auto-refresh every 30 seconds
+onMounted(async () => {
+    // Wait for the DOM to be ready
+    await nextTick();
+    
+    // Initialize the map after a short delay to ensure Leaflet is loaded
+    setTimeout(() => {
+        initMap();
+    }, 100);
+    
+    // Get initial stats
+    await refreshDashboardData();
+    
+    // Auto-refresh every 30 seconds
     refreshInterval.value = setInterval(refreshDashboardData, 30000);
 });
 
@@ -56,12 +55,15 @@ async function refreshDashboardData() {
             },
             withCredentials: true
         });
+        
         locations.value = locationsResponse.data;
         
-        // Update markers
-        locations.value.forEach(location => {
-            addOrUpdateMarker(location);
-        });
+        // Update markers on map
+        if (map.value && locations.value.length > 0) {
+            locations.value.forEach(location => {
+                addOrUpdateMarker(location);
+            });
+        }
         
         // Get updated stats
         const statsResponse = await axios.get('/api/dashboard/stats', {
@@ -74,8 +76,6 @@ async function refreshDashboardData() {
         });
         
         if (statsResponse.data) {
-            stats.value = statsResponse.data;
-            
             // Update reactive references
             activeDriversCount.value = statsResponse.data.activeDriversCount || 0;
             activeVehiclesCount.value = statsResponse.data.activeVehiclesCount || 0;
@@ -90,42 +90,50 @@ async function refreshDashboardData() {
 function initMap() {
     // Check if Leaflet is available
     if (!window.L) {
-        console.error('Leaflet library not loaded');
+        setTimeout(initMap, 500);
         return;
     }
     
-    // Initialize map with better settings
-    map.value = L.map('map', {
-        center: [4.2105, 101.9758],
-        zoom: 10,
-        zoomControl: true,
-        attributionControl: true
-    });
-    
-    // Add tile layer with better styling
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-        minZoom: 5
-    }).addTo(map.value);
-    
-    // Add initial markers for existing locations
-    if (locations.value && locations.value.length > 0) {
-        locations.value.forEach(location => {
-            addOrUpdateMarker(location);
+    try {
+        // Initialize map with better settings
+        map.value = L.map('map', {
+            center: [3.1319, 101.6841], // Kuala Lumpur coordinates
+            zoom: 12,
+            zoomControl: true,
+            attributionControl: true
         });
         
-        // Fit map to show all markers
-        if (Object.keys(markers.value).length > 0) {
-            const group = new L.featureGroup(Object.values(markers.value));
-            map.value.fitBounds(group.getBounds().pad(0.1));
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19,
+            minZoom: 5
+        }).addTo(map.value);
+        
+        // Add initial markers for existing locations
+        if (locations.value && locations.value.length > 0) {
+            locations.value.forEach(location => {
+                addOrUpdateMarker(location);
+            });
+            
+            // Fit map to show all markers
+            if (Object.keys(markers.value).length > 0) {
+                const group = new L.featureGroup(Object.values(markers.value));
+                map.value.fitBounds(group.getBounds().pad(0.1));
+            }
         }
+    } catch (error) {
+        console.error('Error initializing map:', error);
     }
 }
 
 function addOrUpdateMarker(location) {
+    if (!map.value) {
+        return;
+    }
+    
     const driverKey = `driver-${location.driver_id}`;
-    const position = [location.latitude, location.longitude];
+    const position = [parseFloat(location.latitude), parseFloat(location.longitude)];
     const driverName = location.driver?.user?.name || 'Unknown Driver';
     const vehicleInfo = location.vehicle?.plate_number || 'Unknown Vehicle';
     const timeInfo = new Date(location.recorded_at).toLocaleTimeString();
@@ -172,7 +180,7 @@ function addOrUpdateMarker(location) {
                 <strong>Speed:</strong> ${location.speed ? Math.round(location.speed * 3.6) + ' km/h' : 'N/A'}
             </div>
             <div style="margin-bottom: 3px;">
-                <strong>Location:</strong> ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}
+                <strong>Location:</strong> ${parseFloat(location.latitude).toFixed(6)}, ${parseFloat(location.longitude).toFixed(6)}
             </div>
         </div>
     `;
@@ -183,16 +191,24 @@ function addOrUpdateMarker(location) {
         markers.value[driverKey].getPopup().setContent(popupContent);
     } else {
         // Create new marker
-        const marker = L.marker(position, { icon: driverIcon })
-            .addTo(map.value)
-            .bindPopup(popupContent);
-            
-        markers.value[driverKey] = marker;
+        try {
+            const marker = L.marker(position, { icon: driverIcon })
+                .addTo(map.value)
+                .bindPopup(popupContent);
+                
+            markers.value[driverKey] = marker;
+        } catch (error) {
+            console.error('Error creating marker:', error);
+        }
     }
 }
 </script>
 
 <template>
+    <Head>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
+    </Head>
+
     <AppLayout title="Dashboard">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -210,9 +226,6 @@ function addOrUpdateMarker(location) {
                         <div class="mt-1 text-3xl font-semibold text-gray-900">
                             {{ activeDriversCount }}
                         </div>
-                        <div class="text-xs text-gray-400 mt-1">
-                            Total: {{ stats.drivers.total }}
-                        </div>
                     </div>
                     
                     <!-- Active Vehicles -->
@@ -221,9 +234,6 @@ function addOrUpdateMarker(location) {
                         <div class="mt-1 text-3xl font-semibold text-gray-900">
                             {{ activeVehiclesCount }}
                         </div>
-                        <div class="text-xs text-gray-400 mt-1">
-                            Total: {{ stats.vehicles.total }}
-                        </div>
                     </div>
                     
                     <!-- Open Incidents -->
@@ -231,9 +241,6 @@ function addOrUpdateMarker(location) {
                         <div class="text-sm font-medium text-gray-500">Open Incidents</div>
                         <div class="mt-1 text-3xl font-semibold text-gray-900">
                             {{ openIncidentsCount }}
-                        </div>
-                        <div class="text-xs text-gray-400 mt-1">
-                            Total: {{ stats.incidents.total }}
                         </div>
                     </div>
                     
@@ -246,13 +253,10 @@ function addOrUpdateMarker(location) {
                         <div class="mt-1 text-3xl font-semibold" :class="activeSosAlertsCount > 0 ? 'text-red-600' : 'text-gray-900'">
                             {{ activeSosAlertsCount }}
                         </div>
-                        <div class="text-xs mt-1" :class="activeSosAlertsCount > 0 ? 'text-red-400' : 'text-gray-400'">
-                            Total: {{ stats.sos_alerts.total }}
-                        </div>
                     </div>
                 </div>
                 
-                <!-- Refresh Button - More subtle styling -->
+                <!-- Refresh Button -->
                 <div class="flex justify-end mb-6">
                     <button 
                         @click="refreshDashboardData" 
@@ -266,16 +270,19 @@ function addOrUpdateMarker(location) {
                 </div>
                 
                 <!-- Map -->
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                    <div id="map" class="w-full h-[600px] rounded-lg"></div>
+                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 mb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Live Vehicle Tracking</h3>
+                    <div id="map" class="w-full h-[600px] rounded-lg border"></div>
                 </div>
                 
                 <!-- Recent Activities -->
-                <div class="mt-6 bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Activities</h3>
                     
-                    <div v-if="locations.length === 0" class="text-gray-500">
-                        No recent activities found.
+                    <div v-if="locations.length === 0" class="text-gray-500 text-center py-8">
+                        <div class="text-6xl mb-4">📍</div>
+                        <div class="text-lg font-medium mb-2">No Active Drivers</div>
+                        <div class="text-sm">No drivers are currently sending location updates.</div>
                     </div>
                     
                     <div v-else class="overflow-x-auto">
@@ -290,10 +297,24 @@ function addOrUpdateMarker(location) {
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="location in locations" :key="location.id">
+                                <tr v-for="location in locations" :key="location.id" class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">
-                                            {{ location.driver?.user?.name || 'Unknown' }}
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10">
+                                                <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                                    <span class="text-blue-600 font-medium text-sm">
+                                                        {{ (location.driver?.user?.name || 'U').charAt(0).toUpperCase() }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">
+                                                    {{ location.driver?.user?.name || 'Unknown Driver' }}
+                                                </div>
+                                                <div class="text-sm text-gray-500">
+                                                    {{ location.driver?.user?.email || 'No email' }}
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -301,7 +322,7 @@ function addOrUpdateMarker(location) {
                                             {{ location.vehicle?.plate_number || 'Unknown' }}
                                         </div>
                                         <div class="text-sm text-gray-500">
-                                            {{ location.vehicle?.model || '' }}
+                                            {{ location.vehicle?.model || 'Unknown Model' }}
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -314,7 +335,7 @@ function addOrUpdateMarker(location) {
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900">
-                                            {{ location.speed ? `${location.speed} km/h` : 'N/A' }}
+                                            {{ location.speed ? `${Math.round(location.speed)} km/h` : 'N/A' }}
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -331,7 +352,3 @@ function addOrUpdateMarker(location) {
         </div>
     </AppLayout>
 </template>
-
-<style>
-@import 'https://unpkg.com/leaflet@1.8.0/dist/leaflet.css';
-</style>

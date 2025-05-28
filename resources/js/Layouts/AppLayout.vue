@@ -29,8 +29,7 @@ const logout = () => {
 
 <template>
     <div>
-        <Head :title="title" />
-
+        <!-- Remove the Head section with Leaflet links from here since it's already in app.js -->
         <Banner />
 
         <div class="min-h-screen bg-gray-100">

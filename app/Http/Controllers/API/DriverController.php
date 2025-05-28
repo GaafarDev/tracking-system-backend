@@ -5,13 +5,17 @@ use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log; // Add this import
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use App\Models\Driver;
 use App\Models\User;
+use App\Notifications\DriverAccountCreated;
 
 class DriverController extends Controller
 {
+    // Remove the constructor and add the admin middleware to routes instead
+
     public function index(Request $request)
     {
         $query = Driver::with('user');
@@ -46,18 +50,21 @@ class DriverController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
             'license_number' => 'required|string|max:255',
             'phone_number' => 'required|string|max:255',
             'address' => 'nullable|string|max:255',
             'status' => 'required|in:active,inactive,on_leave',
         ]);
 
-        // Create user account first
+        // Generate a random password
+        $password = Str::random(12);
+
+        // Create user account first with driver role
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make($password),
+            'role' => 'driver', // Explicitly set as driver
         ]);
 
         // Create driver record linked to user
@@ -69,8 +76,21 @@ class DriverController extends Controller
             'status' => $validated['status'],
         ]);
 
+        // Send email notification with credentials
+        try {
+            $user->notify(new DriverAccountCreated($driver, $password));
+            Log::info("Driver account created successfully. Email sent to: {$user->email}");
+            $message = 'Driver created successfully. Login credentials have been sent via email.';
+        } catch (\Exception $e) {
+            Log::error('Failed to send driver account creation email: ' . $e->getMessage());
+            Log::info("Generated password for {$user->email}: {$password}");
+            
+            // For development/backup - show the password when email fails
+            $message = "Driver created successfully. ⚠️ Email delivery failed. Login credentials: Email: {$user->email}, Password: {$password}";
+        }
+
         return redirect()->route('drivers.index')
-            ->with('success', 'Driver created successfully.');
+            ->with('success', $message);
     }
 
     public function create()
@@ -145,7 +165,7 @@ class DriverController extends Controller
             ->with('success', 'Driver deleted successfully.');
     }
 
-    // API method for mobile app - REPLACE your existing me() method with this
+    // API method for mobile app - Only drivers can access this
     public function me(Request $request)
     {
         try {
@@ -154,6 +174,13 @@ class DriverController extends Controller
                 return response()->json([
                     'message' => 'User not authenticated'
                 ], 401);
+            }
+
+            // Only allow drivers to access this endpoint
+            if (!$user->isDriver()) {
+                return response()->json([
+                    'message' => 'Access denied. Driver role required.'
+                ], 403);
             }
 
             $driver = Driver::where('user_id', $user->id)->with('user')->first();
@@ -175,5 +202,33 @@ class DriverController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    // Add this method for password reset functionality
+    public function resetPassword(Driver $driver)
+    {
+        // Generate a new random password
+        $newPassword = Str::random(12);
+        
+        // Update user password
+        $driver->user->update([
+            'password' => Hash::make($newPassword)
+        ]);
+
+        // Try to send email notification
+        try {
+            $driver->user->notify(new DriverAccountCreated($driver, $newPassword));
+            Log::info("Password reset for driver. Email sent to: {$driver->user->email}");
+            $message = 'Password reset successfully. New credentials have been sent via email.';
+        } catch (\Exception $e) {
+            Log::error('Failed to send password reset email: ' . $e->getMessage());
+            Log::info("Generated password for {$driver->user->email}: {$newPassword}");
+            
+            // For development/backup - show the password when email fails
+            $message = "Password reset successfully. ⚠️ Email delivery failed. New login credentials: Email: {$driver->user->email}, Password: {$newPassword}";
+        }
+
+        return redirect()->route('drivers.index')
+            ->with('success', $message);
     }
 }

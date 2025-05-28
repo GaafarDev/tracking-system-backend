@@ -21,23 +21,28 @@ Route::get('/', function () {
     ]);
 });
 
+// Admin-only routes
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
+    \App\Http\Middleware\AdminMiddleware::class // Use full class path instead of alias
 ])->group(function () {
-    // Dashboard
+    // Dashboard - Admin only
     Route::get('/dashboard', [App\Http\Controllers\API\DashboardController::class, 'index'])->name('dashboard');
     
-    // Resource controllers
+    // Resource controllers - Admin only
     Route::resource('drivers', DriverController::class);
     Route::resource('vehicles', VehicleController::class);
     Route::resource('routes', RouteController::class);
     Route::resource('schedules', ScheduleController::class);
     Route::resource('incidents', IncidentController::class);
     
+    // Add this route for password reset
+    Route::post('/drivers/{driver}/reset-password', [DriverController::class, 'resetPassword'])
+        ->name('drivers.reset-password');
     
-    // SOS Alert routes
+    // SOS Alert routes - Admin only
     Route::get('/sos', [SosAlertController::class, 'index'])->name('sos.index');
     Route::get('/sos/{sosAlert}', [SosAlertController::class, 'show'])->name('sos.show');
     Route::post('/sos/{sosAlert}/respond', [SosAlertController::class, 'respond'])->name('sos.respond');
@@ -145,7 +150,71 @@ Route::get('/debug/create-test-user', function() {
     } catch (\Exception $e) {
         return response()->json([
             'error' => 'Failed to create test user',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+});
+
+// Add this debug route with your other debug routes
+Route::get('/debug/recent-locations', function() {
+    try {
+        $recentLocations = \App\Models\Location::with(['driver.user', 'vehicle'])
+            ->where('recorded_at', '>=', now()->subMinutes(10))
+            ->orderBy('recorded_at', 'desc')
+            ->get();
+            
+        return response()->json([
+            'total_recent_locations' => $recentLocations->count(),
+            'recent_locations' => $recentLocations,
+            'all_locations_count' => \App\Models\Location::count(),
+            'last_5_locations' => \App\Models\Location::with(['driver.user', 'vehicle'])
+                ->orderBy('recorded_at', 'desc')
+                ->take(5)
+                ->get()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Failed to get recent locations',
             'message' => $e->getMessage()
+        ], 500);
+    }
+});
+
+// Add this debug route to web.php
+Route::get('/debug/dashboard-data', function() {
+    try {
+        // This mimics what your DashboardController does
+        $latestLocations = \App\Models\Location::with(['driver.user', 'vehicle'])
+            ->whereIn('id', function ($query) {
+                $query->selectRaw('MAX(id)')
+                    ->from('locations')
+                    ->groupBy('driver_id');
+            })
+            ->where('recorded_at', '>=', now()->subMinutes(30))
+            ->orderBy('recorded_at', 'desc')
+            ->get();
+            
+        $openIncidents = \App\Models\Incident::whereIn('status', ['reported', 'in_progress'])->count();
+        $activeSosAlerts = \App\Models\SosAlert::where('status', 'active')->count();
+        
+        return response()->json([
+            'activeDrivers' => $latestLocations,
+            'activeDriversCount' => $latestLocations->count(),
+            'openIncidentsCount' => $openIncidents,
+            'activeSosAlertsCount' => $activeSosAlerts,
+            'debug_info' => [
+                'total_locations_in_db' => \App\Models\Location::count(),
+                'locations_last_30_min' => \App\Models\Location::where('recorded_at', '>=', now()->subMinutes(30))->count(),
+                'current_time' => now(),
+                'cutoff_time' => now()->subMinutes(30)
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Failed to get dashboard data',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
         ], 500);
     }
 });
