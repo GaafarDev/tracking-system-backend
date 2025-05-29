@@ -10,6 +10,7 @@ use App\Models\Vehicle;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class ScheduleController extends Controller
 {
@@ -20,31 +21,127 @@ class ScheduleController extends Controller
             return $this->handleApiRequest($request);
         }
         
-        // Handle web request (existing code)
+        // Handle web request (existing code for admin dashboard)
+        return $this->handleWebRequest($request);
+    }
+
+    private function handleApiRequest(Request $request)
+    {
+        Log::info('=== SCHEDULE API REQUEST ===', [
+            'user_id' => $request->user()->id ?? 'null',
+            'request_data' => $request->all()
+        ]);
+
+        try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json([
+                    'message' => 'User not authenticated',
+                    'data' => []
+                ], 401);
+            }
+
+            // Check if user is a driver
+            if (!$user->isDriver()) {
+                return response()->json([
+                    'message' => 'Access denied. Driver role required.',
+                    'data' => []
+                ], 403);
+            }
+            
+            $driver = Driver::where('user_id', $user->id)->first();
+            if (!$driver) {
+                Log::error('Driver not found for user', ['user_id' => $user->id]);
+                return response()->json([
+                    'message' => 'Driver profile not found',
+                    'data' => []
+                ], 404);
+            }
+            
+            Log::info('Driver found', ['driver_id' => $driver->id]);
+
+            // Build query for driver's schedules
+            $query = Schedule::with(['route', 'vehicle'])
+                ->where('driver_id', $driver->id);
+            
+            // Filter by day of week if provided
+            if ($request->has('day_of_week') && !empty($request->day_of_week)) {
+                $query->where('day_of_week', strtolower($request->day_of_week));
+            }
+            
+            // Filter by active status - simplified logic
+            $isActive = $request->get('is_active');
+            if ($isActive !== null) {
+                if (in_array($isActive, [true, 'true', '1', 1])) {
+                    $query->where('is_active', true);
+                } elseif (in_array($isActive, [false, 'false', '0', 0])) {
+                    $query->where('is_active', false);
+                }
+            } else {
+                // Default: only show active schedules for mobile app
+                $query->where('is_active', true);
+            }
+            
+            $schedules = $query->orderByRaw("
+                CASE day_of_week
+                    WHEN 'monday' THEN 1
+                    WHEN 'tuesday' THEN 2
+                    WHEN 'wednesday' THEN 3
+                    WHEN 'thursday' THEN 4
+                    WHEN 'friday' THEN 5
+                    WHEN 'saturday' THEN 6
+                    WHEN 'sunday' THEN 7
+                    ELSE 8
+                END
+            ")
+            ->orderBy('departure_time')
+            ->get();
+            
+            Log::info('Schedules found', ['count' => $schedules->count()]);
+            
+            return response()->json([
+                'data' => $schedules,
+                'message' => 'Schedules retrieved successfully'
+            ], 200);
+            
+        } catch (\Exception $e) {
+            Log::error('Error fetching schedules', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'message' => 'Error fetching schedules',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error',
+                'data' => []
+            ], 500);
+        }
+    }
+
+    private function handleWebRequest(Request $request)
+    {
         $query = Schedule::with(['route', 'driver.user', 'vehicle']);
         
         // Filter by driver if provided
-        if ($request->has('driver_id')) {
+        if ($request->has('driver_id') && $request->driver_id !== 'all') {
             $query->where('driver_id', $request->driver_id);
         }
         
         // Filter by route if provided
-        if ($request->has('route_id')) {
+        if ($request->has('route_id') && $request->route_id !== 'all') {
             $query->where('route_id', $request->route_id);
         }
         
         // Filter by day of week if provided
-        if ($request->has('day_of_week')) {
+        if ($request->has('day_of_week') && $request->day_of_week !== 'all') {
             $query->where('day_of_week', $request->day_of_week);
         }
         
-        // Filter by active status if provided - improved boolean handling
-        if ($request->has('is_active')) {
+        // Filter by active status if provided
+        if ($request->has('is_active') && $request->is_active !== '') {
             $isActive = $request->is_active;
-            // Handle different boolean representations
-            if ($isActive === true || $isActive === 'true' || $isActive === '1' || $isActive === 1) {
+            if (in_array($isActive, [true, 'true', '1', 1])) {
                 $query->where('is_active', true);
-            } elseif ($isActive === false || $isActive === 'false' || $isActive === '0' || $isActive === 0) {
+            } elseif (in_array($isActive, [false, 'false', '0', 0])) {
                 $query->where('is_active', false);
             }
         }
@@ -82,53 +179,48 @@ class ScheduleController extends Controller
         ]);
     }
 
-    private function handleApiRequest(Request $request)
+    // Add a specific endpoint for getting today's schedules
+    public function getTodaySchedules(Request $request)
     {
         try {
-            // Get driver ID from authenticated user
             $user = $request->user();
+            if (!$user || !$user->isDriver()) {
+                return response()->json([
+                    'message' => 'Access denied. Driver role required.',
+                    'data' => []
+                ], 403);
+            }
+
             $driver = Driver::where('user_id', $user->id)->first();
-            
             if (!$driver) {
                 return response()->json([
-                    'message' => 'Driver not found',
+                    'message' => 'Driver profile not found',
                     'data' => []
                 ], 404);
             }
-            
-            $query = Schedule::with(['route', 'vehicle'])
-                ->where('driver_id', $driver->id);
-            
-            // Filter by day of week if provided
-            if ($request->has('day_of_week')) {
-                $query->where('day_of_week', $request->day_of_week);
-            }
-            
-            // Filter by active status if provided - improved boolean handling
-            if ($request->has('is_active')) {
-                $isActive = $request->is_active;
-                // Handle different boolean representations
-                if ($isActive === true || $isActive === 'true' || $isActive === '1' || $isActive === 1) {
-                    $query->where('is_active', true);
-                } elseif ($isActive === false || $isActive === 'false' || $isActive === '0' || $isActive === 0) {
-                    $query->where('is_active', false);
-                }
-            } else {
-                // Only active schedules for mobile app by default
-                $query->where('is_active', true);
-            }
-            
-            $schedules = $query->orderBy('day_of_week')
+
+            // Get today's day of week
+            $today = strtolower(now()->format('l')); // 'monday', 'tuesday', etc.
+
+            $todaySchedules = Schedule::with(['route', 'vehicle'])
+                ->where('driver_id', $driver->id)
+                ->where('day_of_week', $today)
+                ->where('is_active', true)
                 ->orderBy('departure_time')
                 ->get();
-            
+
             return response()->json([
-                'data' => $schedules
+                'data' => $todaySchedules,
+                'today' => $today,
+                'message' => 'Today\'s schedules retrieved successfully'
             ], 200);
+
         } catch (\Exception $e) {
+            Log::error('Error fetching today\'s schedules', ['error' => $e->getMessage()]);
             return response()->json([
-                'message' => 'Error fetching schedules',
-                'error' => $e->getMessage()
+                'message' => 'Error fetching today\'s schedules',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error',
+                'data' => []
             ], 500);
         }
     }
@@ -175,27 +267,37 @@ class ScheduleController extends Controller
         // Check if driver is already scheduled at the same time
         $driverConflict = Schedule::where('driver_id', $data['driver_id'])
             ->where('day_of_week', $data['day_of_week'])
+            ->where('is_active', true)
             ->where(function($query) use ($data) {
                 $query->whereBetween('departure_time', [$data['departure_time'], $data['arrival_time']])
-                    ->orWhereBetween('arrival_time', [$data['departure_time'], $data['arrival_time']]);
+                    ->orWhereBetween('arrival_time', [$data['departure_time'], $data['arrival_time']])
+                    ->orWhere(function($q) use ($data) {
+                        $q->where('departure_time', '<=', $data['departure_time'])
+                          ->where('arrival_time', '>=', $data['arrival_time']);
+                    });
             })
             ->exists();
             
         if ($driverConflict) {
-            return back()->with('error', 'Driver is already scheduled during this time period');
+            abort(422, 'Driver is already scheduled during this time period');
         }
         
         // Check if vehicle is already scheduled at the same time
         $vehicleConflict = Schedule::where('vehicle_id', $data['vehicle_id'])
             ->where('day_of_week', $data['day_of_week'])
+            ->where('is_active', true)
             ->where(function($query) use ($data) {
                 $query->whereBetween('departure_time', [$data['departure_time'], $data['arrival_time']])
-                    ->orWhereBetween('arrival_time', [$data['departure_time'], $data['arrival_time']]);
+                    ->orWhereBetween('arrival_time', [$data['departure_time'], $data['arrival_time']])
+                    ->orWhere(function($q) use ($data) {
+                        $q->where('departure_time', '<=', $data['departure_time'])
+                          ->where('arrival_time', '>=', $data['arrival_time']);
+                    });
             })
             ->exists();
             
         if ($vehicleConflict) {
-            return back()->with('error', 'Vehicle is already scheduled during this time period');
+            abort(422, 'Vehicle is already scheduled during this time period');
         }
     }
     

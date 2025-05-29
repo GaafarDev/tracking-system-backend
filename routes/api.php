@@ -35,15 +35,23 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     
-    // Drivers
+    // Drivers (mobile app endpoints)
     Route::get('/drivers/me', [DriverController::class, 'me']);
-    Route::apiResource('drivers', DriverController::class);
     
-    // Vehicles
-    Route::apiResource('vehicles', VehicleController::class);
+    // Admin-only driver management
+    Route::middleware('admin')->group(function () {
+        Route::apiResource('drivers', DriverController::class)->except(['show']);
+    });
     
-    // Routes
-    Route::apiResource('routes', RouteController::class);
+    // Vehicles (admin only)
+    Route::middleware('admin')->group(function () {
+        Route::apiResource('vehicles', VehicleController::class);
+    });
+    
+    // Routes (admin only)
+    Route::middleware('admin')->group(function () {
+        Route::apiResource('routes', RouteController::class);
+    });
     
     // Locations
     Route::post('/locations/update', [LocationController::class, 'updateLocation']);
@@ -51,29 +59,58 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('locations', LocationController::class);
     
     // Schedules
-    Route::apiResource('schedules', ScheduleController::class);
+    Route::get('/schedules', [ScheduleController::class, 'index']); // Works for both web and API
+    Route::get('/schedules/today', [ScheduleController::class, 'getTodaySchedules']); // New endpoint for mobile
+    
+    // Admin-only schedule management
+    Route::middleware('admin')->group(function () {
+        Route::post('/schedules', [ScheduleController::class, 'store']);
+        Route::put('/schedules/{schedule}', [ScheduleController::class, 'update']);
+        Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy']);
+        Route::get('/schedules/{schedule}', [ScheduleController::class, 'show']);
+    });
     
     // Incidents
-    Route::post('/incidents/report', [IncidentController::class, 'report']);
-    Route::apiResource('incidents', IncidentController::class);
+    Route::post('/incidents/report', [IncidentController::class, 'report']); // Mobile app
+    Route::get('/incidents', [IncidentController::class, 'getIncidents']); // Mobile app - get driver's incidents
+    
+    // Admin-only incident management
+    Route::middleware('admin')->group(function () {
+        Route::get('/incidents/all', [IncidentController::class, 'index']); // Admin view all incidents
+        Route::get('/incidents/{incident}', [IncidentController::class, 'show']);
+        Route::put('/incidents/{incident}', [IncidentController::class, 'update']);
+        Route::delete('/incidents/{incident}', [IncidentController::class, 'destroy']);
+    });
     
     // SOS Alerts
-    Route::post('/sos/send', [SosAlertController::class, 'send']);
-    Route::get('/sos/active', [SosAlertController::class, 'getActiveSosAlert']);
-    Route::post('/sos/{id}/cancel', [SosAlertController::class, 'cancelSosAlert']);
-    Route::post('/sos/{sosAlert}/respond', [SosAlertController::class, 'respond']);
-    Route::post('/sos/{sosAlert}/resolve', [SosAlertController::class, 'resolve']);
-    Route::apiResource('sos', SosAlertController::class);
+    Route::post('/sos/send', [SosAlertController::class, 'send']); // Mobile app
+    Route::get('/sos/active', [SosAlertController::class, 'getActiveSosAlert']); // Mobile app
+    Route::post('/sos/{id}/cancel', [SosAlertController::class, 'cancelSosAlert']); // Mobile app
+    
+    // Admin-only SOS management
+    Route::middleware('admin')->group(function () {
+        Route::get('/sos', [SosAlertController::class, 'index']);
+        Route::get('/sos/{sosAlert}', [SosAlertController::class, 'show']);
+        Route::post('/sos/{sosAlert}/respond', [SosAlertController::class, 'respond']);
+        Route::post('/sos/{sosAlert}/resolve', [SosAlertController::class, 'resolve']);
+    });
     
     // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index']);
     Route::get('/notifications/unread', [NotificationController::class, 'unread']);
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
-    Route::apiResource('notifications', NotificationController::class);
+    Route::get('/notifications/{notification}', [NotificationController::class, 'show']);
     
     // Weather Updates
     Route::get('/weather/latest', [WeatherUpdateController::class, 'latest']);
-    Route::apiResource('weather', WeatherUpdateController::class);
+    
+    // Admin-only weather management
+    Route::middleware('admin')->group(function () {
+        Route::apiResource('weather', WeatherUpdateController::class);
+    });
 
-    // Dashboard
-    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+    // Dashboard (admin only)
+    Route::middleware('admin')->group(function () {
+        Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+    });
 });
