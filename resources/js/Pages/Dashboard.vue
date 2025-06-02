@@ -266,79 +266,87 @@ function addOrUpdateMarker(location) {
                     </div>
                 </div>
 
-                <!-- Stats Overview -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <!-- Enhanced Stats Overview with Modern Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <!-- Active Drivers Card -->
-                    <div class="modern-card p-6 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full -translate-y-10 translate-x-10 opacity-20"></div>
+                    <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-blue-600/30 rounded-full -translate-y-10 translate-x-10"></div>
                         <div class="relative z-10">
                             <div class="flex items-center justify-between mb-4">
-                                <div class="p-3 bg-blue-100 rounded-xl">
-                                    <UserGroupIcon class="w-6 h-6 text-blue-600" />
+                                <div class="p-3 bg-blue-500 rounded-xl shadow-lg">
+                                    <UserGroupIcon class="w-8 h-8 text-white" />
                                 </div>
-                                <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">+12%</span>
+                                <div class="text-right">
+                                    <span class="text-xs text-blue-600 bg-blue-200 px-2 py-1 rounded-full font-medium">+12%</span>
+                                </div>
                             </div>
-                            <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ activeDriversCount }}</h3>
-                            <p class="text-sm text-gray-600">Active Drivers</p>
-                            <div class="mt-3 progress-bar">
-                                <div class="progress-fill" :style="{ width: '75%' }"></div>
+                            <h3 class="text-3xl font-bold text-gray-900 mb-1">{{ activeDriversCount }}</h3>
+                            <p class="text-sm text-gray-600 font-medium">Active Drivers</p>
+                            <div class="mt-3 h-1 bg-blue-200 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-1000" style="width: 75%"></div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Active Vehicles Card -->
-                    <div class="modern-card p-6 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full -translate-y-10 translate-x-10 opacity-20"></div>
+                    <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-400/20 to-emerald-600/30 rounded-full -translate-y-10 translate-x-10"></div>
                         <div class="relative z-10">
                             <div class="flex items-center justify-between mb-4">
-                                <div class="p-3 bg-green-100 rounded-xl">
-                                    <TruckIcon class="w-6 h-6 text-green-600" />
+                                <div class="p-3 bg-emerald-500 rounded-xl shadow-lg">
+                                    <TruckIcon class="w-8 h-8 text-white" />
                                 </div>
-                                <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">+8%</span>
+                                <div class="text-right">
+                                    <span class="text-xs text-emerald-600 bg-emerald-200 px-2 py-1 rounded-full font-medium">+8%</span>
+                                </div>
                             </div>
-                            <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ activeVehiclesCount }}</h3>
-                            <p class="text-sm text-gray-600">Active Vehicles</p>
-                            <div class="mt-3 progress-bar">
-                                <div class="progress-fill" :style="{ width: '82%' }"></div>
+                            <h3 class="text-3xl font-bold text-gray-900 mb-1">{{ activeVehiclesCount }}</h3>
+                            <p class="text-sm text-gray-600 font-medium">Active Vehicles</p>
+                            <div class="mt-3 h-1 bg-emerald-200 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full transition-all duration-1000" style="width: 82%"></div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Open Incidents Card -->
-                    <div class="modern-card p-6 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full -translate-y-10 translate-x-10 opacity-20"></div>
+                    <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-400/20 to-amber-600/30 rounded-full -translate-y-10 translate-x-10"></div>
                         <div class="relative z-10">
                             <div class="flex items-center justify-between mb-4">
-                                <div class="p-3 bg-yellow-100 rounded-xl">
-                                    <ExclamationTriangleIcon class="w-6 h-6 text-yellow-600" />
+                                <div class="p-3 bg-amber-500 rounded-xl shadow-lg">
+                                    <ExclamationTriangleIcon class="w-8 h-8 text-white" />
                                 </div>
-                                <span class="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">{{ openIncidentsCount > 0 ? 'Action Needed' : 'All Clear' }}</span>
+                                <div class="text-right">
+                                    <span class="text-xs text-amber-600 bg-amber-200 px-2 py-1 rounded-full font-medium">{{ openIncidentsCount > 0 ? 'Alert' : 'Clear' }}</span>
+                                </div>
                             </div>
-                            <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ openIncidentsCount }}</h3>
-                            <p class="text-sm text-gray-600">Open Incidents</p>
-                            <div class="mt-3 progress-bar">
-                                <div class="progress-fill bg-gradient-to-r from-yellow-500 to-orange-600" :style="{ width: openIncidentsCount > 0 ? '65%' : '10%' }"></div>
+                            <h3 class="text-3xl font-bold text-gray-900 mb-1">{{ openIncidentsCount }}</h3>
+                            <p class="text-sm text-gray-600 font-medium">Open Incidents</p>
+                            <div class="mt-3 h-1 bg-amber-200 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-full transition-all duration-1000" :style="{ width: openIncidentsCount > 0 ? '65%' : '10%' }"></div>
                             </div>
                         </div>
                     </div>
 
                     <!-- SOS Alerts Card -->
-                    <div class="modern-card p-6 relative overflow-hidden" :class="{ 'status-pulse': activeSosAlertsCount > 0 }">
-                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-400 to-red-600 rounded-full -translate-y-10 translate-x-10 opacity-20"></div>
+                    <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-50 to-red-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1" :class="{ 'animate-pulse': activeSosAlertsCount > 0 }">
+                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-400/20 to-red-600/30 rounded-full -translate-y-10 translate-x-10"></div>
                         <div class="relative z-10">
                             <div class="flex items-center justify-between mb-4">
-                                <div class="p-3 bg-red-100 rounded-xl" :class="{ 'animate-pulse': activeSosAlertsCount > 0 }">
-                                    <ShieldExclamationIcon class="w-6 h-6 text-red-600" />
+                                <div class="p-3 bg-red-500 rounded-xl shadow-lg" :class="{ 'animate-pulse': activeSosAlertsCount > 0 }">
+                                    <ShieldExclamationIcon class="w-8 h-8 text-white" />
                                 </div>
-                                <span class="text-xs px-2 py-1 rounded-full animate-pulse" 
-                                      :class="activeSosAlertsCount > 0 ? 'text-red-600 bg-red-100' : 'text-green-600 bg-green-100'">
-                                    {{ activeSosAlertsCount > 0 ? 'URGENT' : 'All Clear' }}
-                                </span>
+                                <div class="text-right">
+                                    <span class="text-xs px-2 py-1 rounded-full font-medium" 
+                                          :class="activeSosAlertsCount > 0 ? 'text-red-600 bg-red-200 animate-pulse' : 'text-green-600 bg-green-200'">
+                                        {{ activeSosAlertsCount > 0 ? 'URGENT' : 'Clear' }}
+                                    </span>
+                                </div>
                             </div>
-                            <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ activeSosAlertsCount }}</h3>
-                            <p class="text-sm text-gray-600">SOS Alerts</p>
-                            <div class="mt-3 progress-bar">
-                                <div class="progress-fill bg-gradient-to-r from-red-500 to-red-600" 
+                            <h3 class="text-3xl font-bold text-gray-900 mb-1">{{ activeSosAlertsCount }}</h3>
+                            <p class="text-sm text-gray-600 font-medium">SOS Alerts</p>
+                            <div class="mt-3 h-1 bg-red-200 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full transition-all duration-1000" 
                                      :style="{ width: activeSosAlertsCount > 0 ? '90%' : '5%' }"></div>
                             </div>
                         </div>

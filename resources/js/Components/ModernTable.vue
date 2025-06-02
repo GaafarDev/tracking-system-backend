@@ -1,11 +1,16 @@
 <template>
   <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
     <!-- Enhanced Header -->
-    <div v-if="title || $slots.header" class="px-6 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-blue-50">
+    <div v-if="title || $slots.header" class="px-6 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 via-white to-blue-50/30">
       <div class="flex items-center justify-between">
-        <div>
-          <h3 v-if="title" class="text-xl font-bold text-gray-900 mb-1">{{ title }}</h3>
-          <p v-if="subtitle" class="text-sm text-gray-600">{{ subtitle }}</p>
+        <div class="flex items-center space-x-4">
+          <div class="p-3 bg-blue-100 rounded-xl">
+            <TableCellsIcon class="w-6 h-6 text-blue-600" />
+          </div>
+          <div>
+            <h3 v-if="title" class="text-xl font-bold text-gray-900 mb-1">{{ title }}</h3>
+            <p v-if="subtitle" class="text-sm text-gray-600">{{ subtitle }}</p>
+          </div>
         </div>
         <slot name="header-actions" />
       </div>
