@@ -24,6 +24,23 @@
                                 <InputError :message="form.errors.name" class="mt-2" />
                             </div>
 
+                            <!-- Vendor Selection -->
+                            <div>
+                                <InputLabel for="vendor_id" value="Vendor" />
+                                <select
+                                    id="vendor_id"
+                                    v-model="form.vendor_id"
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    required
+                                >
+                                    <option value="">Select Vendor</option>
+                                    <option v-for="vendor in vendors" :key="vendor.id" :value="vendor.id">
+                                        {{ vendor.name }}
+                                    </option>
+                                </select>
+                                <InputError :message="form.errors.vendor_id" class="mt-2" />
+                            </div>
+
                             <!-- Start Location -->
                             <div>
                                 <InputLabel for="start_location" value="Start Location" />
@@ -175,7 +192,12 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 
+const props = defineProps({
+    vendors: Array
+});
+
 const form = useForm({
+    vendor_id: '',
     name: '',
     start_location: '',
     end_location: '',

@@ -15,6 +15,7 @@ const locations = ref(props.activeDrivers || []);
 const map = ref(null);
 const markers = ref({});
 const refreshInterval = ref(null);
+const vendorFilter = ref('');
 
 // Initialize with prop values and provide defaults
 const activeDriversCount = ref(props.activeDriversCount || 0);
@@ -46,8 +47,11 @@ onUnmounted(() => {
 
 async function refreshDashboardData() {
     try {
-        // Get locations
+        const params = vendorFilter.value ? { vendor_id: vendorFilter.value } : {};
+        
+        // Get locations with vendor filter
         const locationsResponse = await axios.get('/api/locations/latest', {
+            params,
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
@@ -67,6 +71,7 @@ async function refreshDashboardData() {
         
         // Get updated stats
         const statsResponse = await axios.get('/api/dashboard/stats', {
+            params,
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
@@ -218,6 +223,22 @@ function addOrUpdateMarker(location) {
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <!-- Vendor Filter -->
+                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 mb-6">
+                    <div class="flex items-center space-x-4">
+                        <label for="vendor-filter" class="text-sm font-medium text-gray-700">Filter by Vendor:</label>
+                        <select 
+                            id="vendor-filter"
+                            v-model="vendorFilter" 
+                            @change="refreshDashboardData"
+                            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="">All Vendors</option>
+                            <!-- Add vendor options here - you may need to fetch these from your API -->
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Stats Overview -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                     <!-- Active Drivers -->

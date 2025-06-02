@@ -22,9 +22,6 @@ Route::get('/', function () {
     ]);
 });
 
-// VENDOR ROUTES
-Route::resource('vendors', VendorController::class);
-
 // Admin-only routes
 Route::middleware([
     'auth:sanctum',
@@ -32,6 +29,9 @@ Route::middleware([
     'verified',
     \App\Http\Middleware\AdminMiddleware::class
 ])->group(function () {
+    // Vendor management routes
+    Route::resource('vendors', VendorController::class);
+    
     // Dashboard - Admin only
     Route::get('/dashboard', [App\Http\Controllers\API\DashboardController::class, 'index'])->name('dashboard');
     

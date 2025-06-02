@@ -85,11 +85,11 @@ class Vendor extends Model
 
     public function getOpenIncidentsCount()
     {
-        return $this->incidents()->whereIn('status', ['reported', 'in_progress'])->count();
+        return $this->incidents()->whereIn('incidents.status', ['reported', 'in_progress'])->count();
     }
 
     public function getActiveSosAlertsCount()
     {
-        return $this->sosAlerts()->where('status', 'active')->count();
+        return $this->sosAlerts()->where('sos_alerts.status', 'active')->count();
     }
 }
