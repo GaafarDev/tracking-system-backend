@@ -11,6 +11,7 @@ defineProps({
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+const sidebarOpen = ref(false);
 </script>
 
 <template>
@@ -19,7 +20,7 @@ const user = computed(() => page.props.auth.user);
         
         <Banner />
         
-        <div class="flex h-screen bg-gray-50">
+        <div class="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
             <!-- Sidebar -->
             <Sidebar :active-sos-count="0" />
             
@@ -33,8 +34,8 @@ const user = computed(() => page.props.auth.user);
                 />
                 
                 <!-- Page Content -->
-                <main class="flex-1 overflow-y-auto">
-                    <div class="py-6">
+                <main class="flex-1 overflow-y-auto p-6">
+                    <div class="max-w-7xl mx-auto">
                         <slot />
                     </div>
                 </main>
