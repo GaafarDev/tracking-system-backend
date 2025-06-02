@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\API; // Update this line
+namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 
-
 use App\Models\Vehicle;
+use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -12,9 +12,14 @@ class VehicleController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Vehicle::query();
+        $query = Vehicle::with('vendor');
         
-        // Apply filters
+        // Apply vendor filter
+        if ($request->has('vendor_id') && $request->vendor_id !== 'all') {
+            $query->where('vendor_id', $request->vendor_id);
+        }
+        
+        // Apply existing filters
         if ($request->has('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
@@ -32,23 +37,29 @@ class VehicleController extends Controller
             });
         }
         
-        $vehicles = $query->paginate(10)
-            ->withQueryString();
+        $vehicles = $query->paginate(10)->withQueryString();
+        $vendors = Vendor::where('status', 'active')->get();
         
         return Inertia::render('Vehicles/Index', [
             'vehicles' => $vehicles,
-            'filters' => $request->only(['status', 'type', 'search']),
+            'vendors' => $vendors,
+            'filters' => $request->only(['status', 'type', 'search', 'vendor_id']),
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Vehicles/Create');
+        $vendors = Vendor::where('status', 'active')->get();
+        
+        return Inertia::render('Vehicles/Create', [
+            'vendors' => $vendors,
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'vendor_id' => 'required|exists:vendors,id',
             'plate_number' => 'required|string|unique:vehicles,plate_number',
             'model' => 'required|string',
             'capacity' => 'required|integer|min:1',

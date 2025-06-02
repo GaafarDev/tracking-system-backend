@@ -55,6 +55,15 @@ class DriverController extends Controller
         ]);
     }
 
+    public function create()
+    {
+        $vendors = Vendor::where('status', 'active')->get();
+        
+        return Inertia::render('Drivers/Create', [
+            'vendors' => $vendors,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -75,7 +84,7 @@ class DriverController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($password),
-            'role' => 'driver', // Explicitly set as driver
+            'role' => 'driver',
         ]);
 
         // Create driver record linked to user AND vendor
@@ -97,21 +106,11 @@ class DriverController extends Controller
             Log::error('Failed to send driver account creation email: ' . $e->getMessage());
             Log::info("Generated password for {$user->email}: {$password}");
             
-            // For development/backup - show the password when email fails
             $message = "Driver created successfully. ⚠️ Email delivery failed. Login credentials: Email: {$user->email}, Password: {$password}";
         }
 
         return redirect()->route('drivers.index')
             ->with('success', $message);
-    }
-
-    public function create()
-    {
-        $vendors = Vendor::where('status', 'active')->get();
-        
-        return Inertia::render('Drivers/Create', [
-            'vendors' => $vendors,
-        ]);
     }
 
     /**

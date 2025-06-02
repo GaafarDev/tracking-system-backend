@@ -13,7 +13,9 @@ use App\Models\Location;
 use App\Models\Route;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Models\Vendor;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -51,19 +53,29 @@ class DashboardController extends Controller
      */
     public function stats()
     {
-        // Get drivers who have sent location updates in the last 30 minutes
-        $activeDriversFromLocations = Location::select('driver_id')
-            ->where('recorded_at', '>=', now()->subMinutes(30))
-            ->distinct()
-            ->count();
-            
-        // Get unique vehicles from recent locations
-        $activeVehiclesFromLocations = Location::select('vehicle_id')
-            ->where('recorded_at', '>=', now()->subMinutes(30))
-            ->distinct()
-            ->count();
-        
+        // Get active drivers from recent locations grouped by vendor
+        $activeDriversByVendor = Location::select('drivers.vendor_id', DB::raw('COUNT(DISTINCT locations.driver_id) as active_count'))
+            ->join('drivers', 'locations.driver_id', '=', 'drivers.id')
+            ->where('locations.recorded_at', '>=', now()->subMinutes(30))
+            ->groupBy('drivers.vendor_id')
+            ->with('vendor')
+            ->get();
+
+        // Get active vehicles from recent locations grouped by vendor
+        $activeVehiclesByVendor = Location::select('vehicles.vendor_id', DB::raw('COUNT(DISTINCT locations.vehicle_id) as active_count'))
+            ->join('vehicles', 'locations.vehicle_id', '=', 'vehicles.id')
+            ->where('locations.recorded_at', '>=', now()->subMinutes(30))
+            ->groupBy('vehicles.vendor_id')
+            ->get();
+
+        // Overall stats
         $stats = [
+            'vendors' => [
+                'total' => Vendor::count(),
+                'active' => Vendor::where('status', 'active')->count(),
+                'inactive' => Vendor::where('status', 'inactive')->count(),
+                'suspended' => Vendor::where('status', 'suspended')->count(),
+            ],
             'admins' => [
                 'total' => User::where('role', 'admin')->count(),
             ],
@@ -95,9 +107,34 @@ class DashboardController extends Controller
                 'total' => SosAlert::count(),
                 'active' => SosAlert::where('status', 'active')->count(),
             ],
-            // Add these fields for the dashboard to show real numbers
-            'activeDriversCount' => $activeDriversFromLocations,
-            'activeVehiclesCount' => $activeVehiclesFromLocations,
+            // Enhanced stats with vendor breakdown
+            'vendor_breakdown' => [
+                'drivers_by_vendor' => Driver::select('vendor_id', DB::raw('count(*) as total'))
+                    ->with('vendor:id,name')
+                    ->groupBy('vendor_id')
+                    ->get(),
+                'vehicles_by_vendor' => Vehicle::select('vendor_id', DB::raw('count(*) as total'))
+                    ->with('vendor:id,name')
+                    ->groupBy('vendor_id')
+                    ->get(),
+                'routes_by_vendor' => Route::select('vendor_id', DB::raw('count(*) as total'))
+                    ->with('vendor:id,name')
+                    ->groupBy('vendor_id')
+                    ->get(),
+                'incidents_by_vendor' => Incident::join('drivers', 'incidents.driver_id', '=', 'drivers.id')
+                    ->select('drivers.vendor_id', DB::raw('count(*) as total'))
+                    ->groupBy('drivers.vendor_id')
+                    ->get(),
+            ],
+            // Keep existing fields for backwards compatibility
+            'activeDriversCount' => Location::select('driver_id')
+                ->where('recorded_at', '>=', now()->subMinutes(30))
+                ->distinct()
+                ->count(),
+            'activeVehiclesCount' => Location::select('vehicle_id')
+                ->where('recorded_at', '>=', now()->subMinutes(30))
+                ->distinct()
+                ->count(),
             'openIncidentsCount' => Incident::whereIn('status', ['reported', 'in_progress'])->count(),
             'activeSosAlertsCount' => SosAlert::where('status', 'active')->count(),
         ];

@@ -6,12 +6,18 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Route;
+use App\Models\Vendor;
 
 class RouteController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Route::query();
+        $query = Route::with('vendor');
+        
+        // Apply vendor filter
+        if ($request->has('vendor_id') && $request->vendor_id !== 'all') {
+            $query->where('vendor_id', $request->vendor_id);
+        }
         
         // Apply search filter
         if ($request->has('search') && $request->search) {
@@ -58,21 +64,28 @@ class RouteController extends Controller
         }
         
         $routes = $query->orderBy('name')->paginate(20)->withQueryString();
+        $vendors = Vendor::where('status', 'active')->get();
         
         return Inertia::render('Routes/Index', [
             'routes' => $routes,
-            'filters' => $request->only(['search', 'distance', 'stops']),
+            'vendors' => $vendors,
+            'filters' => $request->only(['search', 'distance', 'stops', 'vendor_id']),
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Routes/Create');
+        $vendors = Vendor::where('status', 'active')->get();
+        
+        return Inertia::render('Routes/Create', [
+            'vendors' => $vendors,
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'vendor_id' => 'required|exists:vendors,id',
             'name' => 'required|string|max:255',
             'start_location' => 'required|string|max:255',
             'end_location' => 'required|string|max:255',
@@ -83,7 +96,6 @@ class RouteController extends Controller
             'estimated_duration_minutes' => 'nullable|integer|min:1',
         ]);
         
-        // No need to manually encode JSON - model casting handles it
         $route = Route::create($validated);
         
         return redirect()->route('routes.index')

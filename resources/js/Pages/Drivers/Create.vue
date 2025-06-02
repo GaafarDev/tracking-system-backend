@@ -29,6 +29,23 @@
 
                     <form @submit.prevent="submit">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Vendor Selection -->
+                            <div class="md:col-span-2">
+                                <InputLabel for="vendor_id" value="Vendor" />
+                                <select
+                                    id="vendor_id"
+                                    v-model="form.vendor_id"
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    required
+                                >
+                                    <option value="">Select Vendor</option>
+                                    <option v-for="vendor in vendors" :key="vendor.id" :value="vendor.id">
+                                        {{ vendor.name }}
+                                    </option>
+                                </select>
+                                <InputError :message="form.errors.vendor_id" class="mt-2" />
+                            </div>
+
                             <!-- Name -->
                             <div>
                                 <InputLabel for="name" value="Name" />
@@ -136,14 +153,18 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 
+const props = defineProps({
+    vendors: Array,
+});
+
 const form = useForm({
+    vendor_id: '',
     name: '',
     email: '',
     license_number: '',
     phone_number: '',
     address: '',
     status: 'active'
-    // Removed password and password_confirmation fields
 });
 
 const submit = () => {
