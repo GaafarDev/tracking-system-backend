@@ -168,6 +168,8 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
     driver: Object,
+    confirmsTwoFactorAuthentication: Boolean,
+    sessions: Array,
 });
 
 function formatDateTime(dateString) {

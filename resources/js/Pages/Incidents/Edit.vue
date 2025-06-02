@@ -56,7 +56,7 @@
                                     v-model="form.latitude"
                                     type="number"
                                     step="0.000001"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                 />
                                 <InputError :message="form.errors.latitude" class="mt-2" />
                             </div>
@@ -68,7 +68,7 @@
                                     v-model="form.longitude"
                                     type="number"
                                     step="0.000001"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                 />
                                 <InputError :message="form.errors.longitude" class="mt-2" />
                             </div>

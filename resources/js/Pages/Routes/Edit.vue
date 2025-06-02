@@ -18,7 +18,7 @@
                                     id="name"
                                     v-model="form.name"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.name" class="mt-2" />
@@ -33,7 +33,7 @@
                                     type="number"
                                     step="0.1"
                                     min="0"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                 />
                                 <InputError :message="form.errors.distance_km" class="mt-2" />
                             </div>
@@ -46,7 +46,7 @@
                                     v-model="form.estimated_duration_minutes"
                                     type="number"
                                     min="1"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                 />
                                 <InputError :message="form.errors.estimated_duration_minutes" class="mt-2" />
                             </div>
@@ -110,7 +110,7 @@
                                                         :id="`stop_${index}_name`"
                                                         v-model="stop.name"
                                                         type="text"
-                                                        class="mt-1 block w-full"
+                                                        class="input-modern"
                                                         required
                                                         :placeholder="index === 0 ? 'Starting location' : index === form.stops.length - 1 ? 'Destination' : 'Stop name'"
                                                     />
@@ -122,7 +122,7 @@
                                                         v-model="stop.lat"
                                                         type="number"
                                                         step="0.0000001"
-                                                        class="mt-1 block w-full"
+                                                        class="input-modern"
                                                         required
                                                         placeholder="3.1319"
                                                     />
@@ -134,7 +134,7 @@
                                                         v-model="stop.lng"
                                                         type="number"
                                                         step="0.0000001"
-                                                        class="mt-1 block w-full"
+                                                        class="input-modern"
                                                         required
                                                         placeholder="101.6841"
                                                     />
@@ -189,7 +189,7 @@
                                                         v-model="waypoint.lat"
                                                         type="number"
                                                         step="0.0000001"
-                                                        class="mt-1 block w-full"
+                                                        class="input-modern"
                                                         required
                                                     />
                                                 </div>
@@ -200,7 +200,7 @@
                                                         v-model="waypoint.lng"
                                                         type="number"
                                                         step="0.0000001"
-                                                        class="mt-1 block w-full"
+                                                        class="input-modern"
                                                         required
                                                     />
                                                 </div>

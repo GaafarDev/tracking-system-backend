@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, Link } from '@inertiajs/vue3'; // Add Link here
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DashboardCard from '@/Components/DashboardCard.vue';
 import ModernTable from '@/Components/ModernTable.vue';
@@ -226,15 +226,13 @@ function addOrUpdateMarker(location) {
                             <p class="text-3xl font-bold text-gray-900 mt-2">{{ activeDriversCount }}</p>
                             <div class="flex items-center mt-2">
                                 <div class="flex items-center text-green-500 text-sm">
-                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
+                                    <div class="status-indicator-online mr-2"></div>
                                     +12%
                                 </div>
                                 <span class="text-gray-500 text-sm ml-2">vs last week</span>
                             </div>
                         </div>
-                        <div class="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl">
+                        <div class="p-3 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl">
                             <UserGroupIcon class="w-8 h-8 text-white" />
                         </div>
                     </div>
@@ -247,15 +245,13 @@ function addOrUpdateMarker(location) {
                             <p class="text-3xl font-bold text-gray-900 mt-2">{{ activeVehiclesCount }}</p>
                             <div class="flex items-center mt-2">
                                 <div class="flex items-center text-green-500 text-sm">
-                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
+                                    <div class="status-indicator-online mr-2"></div>
                                     +8%
                                 </div>
                                 <span class="text-gray-500 text-sm ml-2">vs last week</span>
                             </div>
                         </div>
-                        <div class="p-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl">
+                        <div class="p-3 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl">
                             <TruckIcon class="w-8 h-8 text-white" />
                         </div>
                     </div>
@@ -268,15 +264,13 @@ function addOrUpdateMarker(location) {
                             <p class="text-3xl font-bold text-gray-900 mt-2">{{ openIncidentsCount }}</p>
                             <div class="flex items-center mt-2">
                                 <div class="flex items-center text-red-500 text-sm">
-                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
+                                    <div class="status-indicator-offline mr-2"></div>
                                     -5%
                                 </div>
                                 <span class="text-gray-500 text-sm ml-2">vs last week</span>
                             </div>
                         </div>
-                        <div class="p-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl">
+                        <div class="p-3 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl">
                             <ExclamationTriangleIcon class="w-8 h-8 text-white" />
                         </div>
                     </div>
@@ -289,13 +283,13 @@ function addOrUpdateMarker(location) {
                             <p class="text-3xl font-bold text-gray-900 mt-2">{{ activeSosAlertsCount }}</p>
                             <div class="flex items-center mt-2">
                                 <div :class="activeSosAlertsCount > 0 ? 'text-red-500' : 'text-green-500'" class="flex items-center text-sm">
-                                    <div :class="activeSosAlertsCount > 0 ? 'bg-red-500' : 'bg-green-500'" class="w-2 h-2 rounded-full mr-2"></div>
+                                    <div :class="activeSosAlertsCount > 0 ? 'status-indicator-offline' : 'status-indicator-online'" class="mr-2"></div>
                                     {{ activeSosAlertsCount > 0 ? 'Active' : 'Normal' }}
                                 </div>
                                 <span class="text-gray-500 text-sm ml-2">status</span>
                             </div>
                         </div>
-                        <div :class="activeSosAlertsCount > 0 ? 'bg-gradient-to-r from-red-500 to-red-600' : 'bg-gradient-to-r from-gray-400 to-gray-500'" class="p-3 rounded-xl">
+                        <div :class="activeSosAlertsCount > 0 ? 'bg-gradient-to-r from-red-500 to-red-600' : 'bg-gradient-to-r from-primary-500 to-primary-600'" class="p-3 rounded-xl">
                             <ShieldExclamationIcon class="w-8 h-8 text-white" />
                         </div>
                     </div>

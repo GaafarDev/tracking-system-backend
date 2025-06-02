@@ -35,7 +35,7 @@
                                     id="plate_number"
                                     v-model="form.plate_number"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.plate_number" class="mt-2" />
@@ -48,7 +48,7 @@
                                     id="model"
                                     v-model="form.model"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.model" class="mt-2" />
@@ -80,7 +80,7 @@
                                     v-model="form.capacity"
                                     type="number"
                                     min="1"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.capacity" class="mt-2" />
@@ -95,7 +95,7 @@
                                     type="number"
                                     min="1900"
                                     :max="new Date().getFullYear() + 1"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                 />
                                 <InputError :message="form.errors.year" class="mt-2" />
                             </div>
@@ -107,7 +107,7 @@
                                     id="color"
                                     v-model="form.color"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                 />
                                 <InputError :message="form.errors.color" class="mt-2" />
                             </div>
@@ -153,7 +153,7 @@
                                     id="engine_number"
                                     v-model="form.engine_number"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                 />
                                 <InputError :message="form.errors.engine_number" class="mt-2" />
                             </div>
@@ -165,7 +165,7 @@
                                     id="chassis_number"
                                     v-model="form.chassis_number"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                 />
                                 <InputError :message="form.errors.chassis_number" class="mt-2" />
                             </div>

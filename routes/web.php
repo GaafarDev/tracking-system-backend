@@ -13,6 +13,9 @@ use App\Http\Controllers\API\VendorController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+// Comment out or remove this line since the file doesn't exist
+// require_once __DIR__.'/auth.php';
+
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -20,6 +23,22 @@ Route::get('/', function () {
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
+});
+
+// Profile management routes (available to all authenticated users)
+Route::middleware([
+    'auth:sanctum',
+    config('jetstream.auth_session'),
+    'verified',
+])->group(function () {
+    Route::get('/dashboard', function () {
+        return Inertia::render('Dashboard');
+    })->name('dashboard');
+    
+    // Profile routes
+    Route::get('/user/profile', function () {
+        return Inertia::render('Profile/Show');
+    })->name('profile.show');
 });
 
 // Admin-only routes
@@ -32,7 +51,7 @@ Route::middleware([
     // Vendor management routes
     Route::resource('vendors', VendorController::class);
     
-    // Dashboard - Admin only
+    // Dashboard - Admin only (override the basic dashboard for admins)
     Route::get('/dashboard', [App\Http\Controllers\API\DashboardController::class, 'index'])->name('dashboard');
     
     // Existing resource controllers - Admin only

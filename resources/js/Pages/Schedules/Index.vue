@@ -24,7 +24,7 @@
                                 List
                             </button>
                         </div>
-                        <Link :href="route('schedules.create')" class="btn-modern">
+                        <Link :href="route('schedules.create')" class="btn-primary">
                             <PlusIcon class="w-5 h-5 mr-2" />
                             Add Schedule
                         </Link>

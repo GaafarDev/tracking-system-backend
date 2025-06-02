@@ -90,7 +90,7 @@
                                     id="departure_time"
                                     v-model="form.departure_time"
                                     type="time"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.departure_time" class="mt-2" />
@@ -103,7 +103,7 @@
                                     id="arrival_time"
                                     v-model="form.arrival_time"
                                     type="time"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.arrival_time" class="mt-2" />

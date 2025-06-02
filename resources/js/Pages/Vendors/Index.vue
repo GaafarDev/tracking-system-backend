@@ -53,7 +53,7 @@ function confirmDelete(vendor) {
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     Vendors
                 </h2>
-                <Link :href="route('vendors.create')" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
+                <Link :href="route('vendors.create')" class="btn-primary">
                     Add Vendor
                 </Link>
             </div>
@@ -120,13 +120,13 @@ function confirmDelete(vendor) {
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <Link :href="route('vendors.show', vendor.id)" class="text-blue-600 hover:text-blue-900 mr-3">
+                                        <Link :href="route('vendors.show', vendor.id)" class="btn-action-view">
                                             View
                                         </Link>
-                                        <Link :href="route('vendors.edit', vendor.id)" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                        <Link :href="route('vendors.edit', vendor.id)" class="btn-action-edit">
                                             Edit
                                         </Link>
-                                        <button @click="confirmDelete(vendor)" class="text-red-600 hover:text-red-900">
+                                        <button @click="confirmDelete(vendor)" class="btn-action-delete">
                                             Delete
                                         </button>
                                     </td>

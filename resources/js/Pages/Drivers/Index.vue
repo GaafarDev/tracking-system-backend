@@ -178,13 +178,13 @@ const stats = {
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-2">
-                                        <Link :href="route('drivers.show', driver.id)" class="text-blue-600 hover:text-blue-900 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors duration-150">
+                                        <Link :href="route('drivers.show', driver.id)" class="btn-action-view">
                                             View
                                         </Link>
-                                        <Link :href="route('drivers.edit', driver.id)" class="text-indigo-600 hover:text-indigo-900 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors duration-150">
+                                        <Link :href="route('drivers.edit', driver.id)" class="btn-action-edit">
                                             Edit
                                         </Link>
-                                        <button @click="confirmDelete(driver)" class="text-red-600 hover:text-red-900 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors duration-150">
+                                        <button @click="confirmDelete(driver)" class="btn-action-delete">
                                             Delete
                                         </button>
                                     </div>
@@ -198,7 +198,7 @@ const stats = {
                                         <UserGroupIcon class="h-12 w-12 text-gray-300 mb-4" />
                                         <h3 class="text-lg font-medium text-gray-900 mb-2">No drivers found</h3>
                                         <p class="text-gray-500">Try adjusting your search or filter criteria.</p>
-                                        <Link :href="route('drivers.create')" class="mt-4 btn-primary">
+                                        <Link :href="route('drivers.create')" class="btn-primary">
                                             <PlusIcon class="w-4 h-4 mr-2" />
                                             Add Your First Driver
                                         </Link>

@@ -205,13 +205,13 @@ const stats = {
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-2">
-                                        <Link :href="route('vehicles.show', vehicle.id)" class="text-blue-600 hover:text-blue-900 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors duration-150">
+                                        <Link :href="route('vehicles.show', vehicle.id)" class="btn-action-view">
                                             View
                                         </Link>
-                                        <Link :href="route('vehicles.edit', vehicle.id)" class="text-indigo-600 hover:text-indigo-900 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors duration-150">
+                                        <Link :href="route('vehicles.edit', vehicle.id)" class="btn-action-edit">
                                             Edit
                                         </Link>
-                                        <button @click="confirmDelete(vehicle)" class="text-red-600 hover:text-red-900 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors duration-150">
+                                        <button @click="confirmDelete(vehicle)" class="btn-action-delete">
                                             Delete
                                         </button>
                                     </div>

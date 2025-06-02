@@ -261,10 +261,10 @@ watch([() => dateRange.value.from, () => dateRange.value.to], () => applyFilters
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <Link :href="route('incidents.show', incident.id)" class="text-blue-600 hover:text-blue-900 mr-3">
+                                        <Link :href="route('incidents.show', incident.id)" class="btn-action-view">
                                             View
                                         </Link>
-                                        <Link :href="route('incidents.edit', incident.id)" class="text-indigo-600 hover:text-indigo-900">
+                                        <Link :href="route('incidents.edit', incident.id)" class="btn-action-edit">
                                             Update
                                         </Link>
                                     </td>

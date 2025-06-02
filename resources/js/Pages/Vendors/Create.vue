@@ -18,7 +18,7 @@
                                     id="name"
                                     v-model="form.name"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.name" class="mt-2" />
@@ -31,7 +31,7 @@
                                     id="company_registration_number"
                                     v-model="form.company_registration_number"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.company_registration_number" class="mt-2" />
@@ -44,7 +44,7 @@
                                     id="contact_person"
                                     v-model="form.contact_person"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.contact_person" class="mt-2" />
@@ -57,7 +57,7 @@
                                     id="email"
                                     v-model="form.email"
                                     type="email"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.email" class="mt-2" />
@@ -70,7 +70,7 @@
                                     id="phone_number"
                                     v-model="form.phone_number"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.phone_number" class="mt-2" />
@@ -86,7 +86,7 @@
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.commission_rate" class="mt-2" />
@@ -115,7 +115,7 @@
                                     id="contract_start_date"
                                     v-model="form.contract_start_date"
                                     type="date"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.contract_start_date" class="mt-2" />
@@ -128,7 +128,7 @@
                                     id="contract_end_date"
                                     v-model="form.contract_end_date"
                                     type="date"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                 />
                                 <InputError :message="form.errors.contract_end_date" class="mt-2" />
                             </div>
