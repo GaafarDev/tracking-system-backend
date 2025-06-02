@@ -31,100 +31,88 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Vendor Selection -->
                             <div class="md:col-span-2">
-                                <InputLabel for="vendor_id" value="Vendor" />
-                                <select
+                                <FormInput
                                     id="vendor_id"
+                                    label="Vendor"
+                                    type="select"
                                     v-model="form.vendor_id"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    :options="vendors.map(v => ({ value: v.id, label: v.name }))"
+                                    placeholder="Select Vendor"
+                                    :error="form.errors.vendor_id"
                                     required
-                                >
-                                    <option value="">Select Vendor</option>
-                                    <option v-for="vendor in vendors" :key="vendor.id" :value="vendor.id">
-                                        {{ vendor.name }}
-                                    </option>
-                                </select>
-                                <InputError :message="form.errors.vendor_id" class="mt-2" />
+                                />
                             </div>
 
                             <!-- Name -->
-                            <div>
-                                <InputLabel for="name" value="Name" />
-                                <TextInput
-                                    id="name"
-                                    v-model="form.name"
-                                    type="text"
-                                    class="mt-1 block w-full"
-                                    required
-                                />
-                                <InputError :message="form.errors.name" class="mt-2" />
-                            </div>
+                            <FormInput
+                                id="name"
+                                label="Name"
+                                v-model="form.name"
+                                placeholder="Enter driver's full name"
+                                :error="form.errors.name"
+                                required
+                            />
 
                             <!-- Email -->
-                            <div>
-                                <InputLabel for="email" value="Email" />
-                                <TextInput
-                                    id="email"
-                                    v-model="form.email"
-                                    type="email"
-                                    class="mt-1 block w-full"
-                                    required
-                                />
-                                <InputError :message="form.errors.email" class="mt-2" />
-                            </div>
+                            <FormInput
+                                id="email"
+                                label="Email"
+                                type="email"
+                                v-model="form.email"
+                                placeholder="driver@example.com"
+                                :error="form.errors.email"
+                                autocomplete="email"
+                                required
+                            />
 
                             <!-- License Number -->
-                            <div>
-                                <InputLabel for="license_number" value="License Number" />
-                                <TextInput
-                                    id="license_number"
-                                    v-model="form.license_number"
-                                    type="text"
-                                    class="mt-1 block w-full"
-                                    required
-                                />
-                                <InputError :message="form.errors.license_number" class="mt-2" />
-                            </div>
+                            <FormInput
+                                id="license_number"
+                                label="License Number"
+                                v-model="form.license_number"
+                                placeholder="Enter license number"
+                                :error="form.errors.license_number"
+                                required
+                            />
 
                             <!-- Phone Number -->
-                            <div>
-                                <InputLabel for="phone_number" value="Phone Number" />
-                                <TextInput
-                                    id="phone_number"
-                                    v-model="form.phone_number"
-                                    type="text"
-                                    class="mt-1 block w-full"
-                                    required
-                                />
-                                <InputError :message="form.errors.phone_number" class="mt-2" />
-                            </div>
+                            <FormInput
+                                id="phone_number"
+                                label="Phone Number"
+                                type="tel"
+                                v-model="form.phone_number"
+                                placeholder="+60123456789"
+                                :error="form.errors.phone_number"
+                                required
+                            />
 
                             <!-- Address -->
                             <div class="md:col-span-2">
-                                <InputLabel for="address" value="Address" />
-                                <textarea
+                                <FormInput
                                     id="address"
+                                    label="Address"
+                                    type="textarea"
                                     v-model="form.address"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                    rows="3"
-                                ></textarea>
-                                <InputError :message="form.errors.address" class="mt-2" />
+                                    placeholder="Enter complete address"
+                                    :error="form.errors.address"
+                                    :rows="3"
+                                />
                             </div>
 
                             <!-- Status -->
-                            <div>
-                                <InputLabel for="status" value="Status" />
-                                <select 
-                                    id="status"
-                                    v-model="form.status"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                    required
-                                >
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                    <option value="on_leave">On Leave</option>
-                                </select>
-                                <InputError :message="form.errors.status" class="mt-2" />
-                            </div>
+                            <FormInput
+                                id="status"
+                                label="Status"
+                                type="select"
+                                v-model="form.status"
+                                :options="[
+                                    { value: 'active', label: 'Active' },
+                                    { value: 'inactive', label: 'Inactive' },
+                                    { value: 'on_leave', label: 'On Leave' }
+                                ]"
+                                :error="form.errors.status"
+                                required
+                            />
                         </div>
 
                         <div class="flex items-center justify-end mt-6">
@@ -147,6 +135,7 @@
 
 <script setup>
 import { useForm, Link } from '@inertiajs/vue3';
+import FormInput from '@/Components/FormInput.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';

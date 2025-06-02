@@ -2,6 +2,8 @@
 import { ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import ModernTable from '@/Components/ModernTable.vue';
+import { PlusIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
     drivers: Object,
@@ -62,131 +64,77 @@ function confirmDelete(driver) {
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                    <!-- Search and Filters -->
-                    <div class="flex flex-col md:flex-row gap-4 mb-6">
-                        <div class="flex-1">
-                            <input 
-                                v-model="search" 
-                                type="text" 
-                                placeholder="Search drivers by name, email, license..." 
-                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                        </div>
-                        <div class="w-full md:w-48">
+                    <ModernTable
+                        title="Drivers"
+                        subtitle="Manage and monitor all registered drivers"
+                        :data="drivers.data"
+                        :columns="[
+                            { key: 'user.name', label: 'Name' },
+                            { key: 'phone_number', label: 'Contact' },
+                            { key: 'license_number', label: 'License' },
+                            { key: 'status', label: 'Status' }
+                        ]"
+                        search-placeholder="Search drivers by name, email, license..."
+                        empty-title="No drivers found"
+                        empty-message="Try adjusting your search or filter criteria.">
+                        
+                        <template #header-actions>
+                            <Link :href="route('drivers.create')" class="btn-primary">
+                                <PlusIcon class="w-4 h-4 mr-2" />
+                                Add Driver
+                            </Link>
+                        </template>
+
+                        <template #filters>
                             <select 
                                 v-model="filterStatus"
-                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
+                                class="px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
                                 <option value="all">All Statuses</option>
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                                 <option value="on_leave">On Leave</option>
                             </select>
-                        </div>
-                    </div>
-                    
-                    <!-- Results summary -->
-                    <div class="mb-4">
-                        <p class="text-sm text-gray-600">
-                            Showing {{ props.drivers.data.length }} of {{ props.drivers.total }} drivers
-                        </p>
-                    </div>
-                    
-                    <!-- Drivers Table -->
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="driver in props.drivers.data" :key="driver.id" class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                                                <span class="text-gray-600 font-medium">{{ driver.user.name.charAt(0) }}</span>
-                                            </div>
-                                            <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900">
-                                                    {{ driver.user.name }}
-                                                </div>
-                                                <div class="text-sm text-gray-500">
-                                                    {{ driver.user.email }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ driver.phone_number }}</div>
-                                        <div class="text-sm text-gray-500">{{ driver.address || 'No address' }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ driver.license_number }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span :class="['px-2 inline-flex text-xs leading-5 font-semibold rounded-full', getStatusColor(driver.status)]">
-                                            {{ driver.status.charAt(0).toUpperCase() + driver.status.slice(1).replace('_', ' ') }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div class="flex justify-end space-x-2">
-                                            <Link :href="route('drivers.show', driver.id)" class="text-blue-600 hover:text-blue-900 px-2 py-1 rounded">
-                                                View
-                                            </Link>
-                                            <Link :href="route('drivers.edit', driver.id)" class="text-indigo-600 hover:text-indigo-900 px-2 py-1 rounded">
-                                                Edit
-                                            </Link>
-                                            <button @click="confirmDelete(driver)" class="text-red-600 hover:text-red-900 px-2 py-1 rounded">
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Empty state -->
-                                <tr v-if="props.drivers.data.length === 0">
-                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
-                                        <div class="flex flex-col items-center">
-                                            <svg class="h-12 w-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                            </svg>
-                                            <h3 class="text-lg font-medium text-gray-900 mb-2">No drivers found</h3>
-                                            <p class="text-gray-500">Try adjusting your search or filter criteria.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Pagination -->
-                    <div class="mt-6 flex items-center justify-between">
-                        <div class="text-sm text-gray-700">
-                            Showing {{ props.drivers.from || 0 }} to {{ props.drivers.to || 0 }} of {{ props.drivers.total || 0 }} drivers
-                        </div>
-                        
-                        <div class="flex-1 flex justify-end space-x-2">
-                            <Link 
-                                v-if="props.drivers.prev_page_url" 
-                                :href="props.drivers.prev_page_url" 
-                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition duration-150 ease-in-out"
-                            >
-                                Previous
-                            </Link>
-                            <Link 
-                                v-if="props.drivers.next_page_url" 
-                                :href="props.drivers.next_page_url" 
-                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition duration-150 ease-in-out"
-                            >
-                                Next
-                            </Link>
-                        </div>
-                    </div>
+                        </template>
+
+                        <template #cell-user.name="{ item }">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-medium">{{ item.user.name.charAt(0) }}</span>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ item.user.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ item.user.email }}</div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template #cell-phone_number="{ item }">
+                            <div>
+                                <div class="text-sm text-gray-900">{{ item.phone_number }}</div>
+                                <div class="text-sm text-gray-500">{{ item.address || 'No address' }}</div>
+                            </div>
+                        </template>
+
+                        <template #cell-status="{ item }">
+                            <span :class="['px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full', getStatusColor(item.status)]">
+                                {{ item.status.charAt(0).toUpperCase() + item.status.slice(1).replace('_', ' ') }}
+                            </span>
+                        </template>
+
+                        <template #actions="{ item }">
+                            <div class="flex space-x-2">
+                                <Link :href="route('drivers.show', item.id)" class="text-blue-600 hover:text-blue-900 px-2 py-1 rounded">
+                                    View
+                                </Link>
+                                <Link :href="route('drivers.edit', item.id)" class="text-indigo-600 hover:text-indigo-900 px-2 py-1 rounded">
+                                    Edit
+                                </Link>
+                                <button @click="confirmDelete(item)" class="text-red-600 hover:text-red-900 px-2 py-1 rounded">
+                                    Delete
+                                </button>
+                            </div>
+                        </template>
+                    </ModernTable>
                 </div>
             </div>
         </div>

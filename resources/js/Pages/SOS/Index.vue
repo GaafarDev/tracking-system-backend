@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import axios from 'axios';
 
 const props = defineProps({
@@ -207,22 +208,32 @@ function getStatusColor(status) {
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Active SOS Alert Banner -->
-                <div v-if="hasActiveSosAlerts()" class="bg-red-600 shadow-xl sm:rounded-lg p-6 mb-6 animate-pulse">
+                <div v-if="hasActiveSosAlerts()" 
+                     class="bg-gradient-to-r from-red-600 to-red-700 shadow-2xl rounded-2xl p-6 mb-8"
+                     v-motion
+                     :initial="{ opacity: 0, scale: 0.95 }"
+                     :enter="{ opacity: 1, scale: 1 }">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <svg class="h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <h3 class="text-lg leading-6 font-medium text-white">
-                                URGENT: Active SOS Alerts
-                            </h3>
-                            <div class="mt-2 text-sm text-red-100">
-                                <p>
-                                    There are {{ props.sosAlerts.data.filter(a => a.status === 'active').length }} active SOS alerts that require immediate attention.
-                                </p>
+                            <div class="h-12 w-12 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                                <ExclamationTriangleIcon class="h-8 w-8 text-white" />
                             </div>
+                        </div>
+                        <div class="ml-4 flex-1">
+                            <h3 class="text-xl font-bold text-white flex items-center">
+                                🚨 URGENT: Active SOS Alerts
+                                <span class="ml-3 px-3 py-1 bg-white/20 rounded-full text-sm font-medium animate-pulse">
+                                    {{ props.sosAlerts.data.filter(a => a.status === 'active').length }}
+                                </span>
+                            </h3>
+                            <p class="mt-2 text-red-100">
+                                There are active SOS alerts that require immediate attention from drivers in the field.
+                            </p>
+                        </div>
+                        <div class="ml-4">
+                            <Link :href="route('sos.index')" class="bg-white text-red-600 px-6 py-3 rounded-xl font-semibold hover:bg-red-50 transition-colors duration-200">
+                                View All Alerts
+                            </Link>
                         </div>
                     </div>
                 </div>

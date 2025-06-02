@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { HomeIcon, UserGroupIcon, BellIcon, TruckIcon, MapIcon, CalendarIcon, ExclamationTriangleIcon, ShieldExclamationIcon, BuildingOfficeIcon } from '@heroicons/vue/24/outline';
 import ApplicationMark from '@/Components/ApplicationMark.vue';
 import Banner from '@/Components/Banner.vue';
 import Dropdown from '@/Components/Dropdown.vue';
@@ -33,48 +34,69 @@ const logout = () => {
         <Banner />
 
         <div class="min-h-screen bg-gray-100">
-            <nav class="bg-white border-b border-gray-100">
+            <nav class="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-50">
                 <!-- Primary Navigation Menu -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex justify-between h-16">
-                        <div class="flex">
-                            <!-- Logo -->
+                        <div class="flex items-center">
+                            <!-- Logo with enhanced styling -->
                             <div class="shrink-0 flex items-center">
-                                <Link :href="route('dashboard')">
-                                    <ApplicationMark class="block h-9 w-auto" />
+                                <Link :href="route('dashboard')" class="flex items-center space-x-3 group">
+                                    <div class="relative">
+                                        <ApplicationMark class="block h-10 w-auto text-red-600 group-hover:text-red-700 transition-colors duration-200" />
+                                        <div class="absolute -inset-1 bg-red-600/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                                    </div>
+                                    <span class="hidden md:block text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                                        MaraLinear
+                                    </span>
                                 </Link>
                             </div>
 
-                            <!-- Navigation Links -->
-                            <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
+                            <!-- Enhanced Navigation Links -->
+                            <div class="hidden space-x-1 sm:-my-px sm:ms-10 sm:flex">
+                                <NavLink :href="route('dashboard')" :active="route().current('dashboard')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                    <HomeIcon class="w-4 h-4 mr-2" />
                                     Dashboard
                                 </NavLink>
-                                <NavLink :href="route('drivers.index')" :active="route().current('drivers.*')">
+                                <NavLink :href="route('drivers.index')" :active="route().current('drivers.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                    <UserGroupIcon class="w-4 h-4 mr-2" />
                                     Drivers
                                 </NavLink>
-                                <NavLink :href="route('vehicles.index')" :active="route().current('vehicles.*')">
+                                <NavLink :href="route('vehicles.index')" :active="route().current('vehicles.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                    <TruckIcon class="w-4 h-4 mr-2" />
                                     Vehicles
                                 </NavLink>
-                                <NavLink :href="route('routes.index')" :active="route().current('routes.*')">
+                                <NavLink :href="route('routes.index')" :active="route().current('routes.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                    <MapIcon class="w-4 h-4 mr-2" />
                                     Routes
                                 </NavLink>
-                                <NavLink :href="route('schedules.index')" :active="route().current('schedules.*')">
+                                <NavLink :href="route('schedules.index')" :active="route().current('schedules.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                    <CalendarIcon class="w-4 h-4 mr-2" />
                                     Schedules
                                 </NavLink>
-                                <NavLink :href="route('incidents.index')" :active="route().current('incidents.*')">
+                                <NavLink :href="route('incidents.index')" :active="route().current('incidents.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                    <ExclamationTriangleIcon class="w-4 h-4 mr-2" />
                                     Incidents
                                 </NavLink>
-                                <NavLink :href="route('sos.index')" :active="route().current('sos.*')">
+                                <NavLink :href="route('sos.index')" :active="route().current('sos.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                    <ShieldExclamationIcon class="w-4 h-4 mr-2" />
                                     SOS Alerts
                                 </NavLink>
-                                <NavLink :href="route('vendors.index')" :active="route().current('vendors.*')">
+                                <NavLink :href="route('vendors.index')" :active="route().current('vendors.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                    <BuildingOfficeIcon class="w-4 h-4 mr-2" />
                                     Vendors
                                 </NavLink>
                             </div>
                         </div>
 
-                        <div class="hidden sm:flex sm:items-center sm:ms-6">
+                        <!-- Enhanced user dropdown with notifications -->
+                        <div class="hidden sm:flex sm:items-center sm:space-x-4">
+                            <!-- Notifications Bell -->
+                            <button class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                                <BellIcon class="w-6 h-6" />
+                                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                            </button>
+                            
                             <div class="ms-3 relative">
                                 <!-- Teams Dropdown -->
                                 <Dropdown v-if="$page.props.jetstream.hasTeamFeatures" align="right" width="60">

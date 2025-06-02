@@ -6,6 +6,9 @@ import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
+import Toast from "vue-toastification";
+import "vue-toastification/dist/index.css";
+import { MotionPlugin } from '@vueuse/motion'
 
 // Fix Leaflet's icon paths
 delete L.Icon.Default.prototype._getIconUrl;
@@ -27,6 +30,12 @@ createInertiaApp({
         return createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
+            .use(Toast, {
+                transition: "Vue-Transition",
+                maxToasts: 20,
+                newestOnTop: true
+            })
+            .use(MotionPlugin)
             .mount(el);
     },
     progress: {

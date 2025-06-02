@@ -2,7 +2,19 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import ModernTable from '@/Components/ModernTable.vue';
+import StatCard from '@/Components/StatCard.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
+import { useToast } from '@/Composables/useToast.js';
 import axios from 'axios';
+import { 
+    ArrowUpIcon, 
+    UserGroupIcon, 
+    TruckIcon, 
+    ExclamationTriangleIcon, 
+    ShieldExclamationIcon, 
+    ShieldCheckIcon 
+} from '@heroicons/vue/24/outline';
 
 const props = defineProps({
     activeDrivers: Array,
@@ -23,6 +35,8 @@ const activeVehiclesCount = ref(0);
 const openIncidentsCount = ref(props.openIncidentsCount || 0);
 const activeSosAlertsCount = ref(props.activeSosAlertsCount || 0);
 
+const { success, error, warning, sosAlert } = useToast();
+
 onMounted(async () => {
     // Wait for the DOM to be ready
     await nextTick();
@@ -34,6 +48,11 @@ onMounted(async () => {
     
     // Get initial stats
     await refreshDashboardData();
+    
+    // Show SOS alerts as toast notifications
+    if (activeSosAlertsCount.value > 0) {
+        sosAlert(`${activeSosAlertsCount.value} active SOS alert(s) require immediate attention!`);
+    }
     
     // Auto-refresh every 30 seconds
     refreshInterval.value = setInterval(refreshDashboardData, 30000);
@@ -81,11 +100,19 @@ async function refreshDashboardData() {
         });
         
         if (statsResponse.data) {
+            // Check for new SOS alerts
+            const previousSosCount = activeSosAlertsCount.value;
+            
             // Update reactive references
             activeDriversCount.value = statsResponse.data.activeDriversCount || 0;
             activeVehiclesCount.value = statsResponse.data.activeVehiclesCount || 0;
             openIncidentsCount.value = statsResponse.data.openIncidentsCount || 0;
             activeSosAlertsCount.value = statsResponse.data.activeSosAlertsCount || 0;
+            
+            // Show SOS alert notification if count increased
+            if (activeSosAlertsCount.value > previousSosCount) {
+                sosAlert(`${activeSosAlertsCount.value} active SOS alert(s) require immediate attention!`);
+            }
         }
     } catch (error) {
         console.error('Error refreshing dashboard data:', error);
@@ -240,41 +267,49 @@ function addOrUpdateMarker(location) {
                 </div>
 
                 <!-- Stats Overview -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                    <!-- Active Drivers -->
-                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                        <div class="text-sm font-medium text-gray-500">Active Drivers</div>
-                        <div class="mt-1 text-3xl font-semibold text-gray-900">
-                            {{ activeDriversCount }}
-                        </div>
-                    </div>
-                    
-                    <!-- Active Vehicles -->
-                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                        <div class="text-sm font-medium text-gray-500">Active Vehicles</div>
-                        <div class="mt-1 text-3xl font-semibold text-gray-900">
-                            {{ activeVehiclesCount }}
-                        </div>
-                    </div>
-                    
-                    <!-- Open Incidents -->
-                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                        <div class="text-sm font-medium text-gray-500">Open Incidents</div>
-                        <div class="mt-1 text-3xl font-semibold text-gray-900">
-                            {{ openIncidentsCount }}
-                        </div>
-                    </div>
-                    
-                    <!-- Active SOS Alerts -->
-                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6" 
-                         :class="{'bg-red-50': activeSosAlertsCount > 0}">
-                        <div class="text-sm font-medium" :class="activeSosAlertsCount > 0 ? 'text-red-500' : 'text-gray-500'">
-                            Active SOS Alerts
-                        </div>
-                        <div class="mt-1 text-3xl font-semibold" :class="activeSosAlertsCount > 0 ? 'text-red-600' : 'text-gray-900'">
-                            {{ activeSosAlertsCount }}
-                        </div>
-                    </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <StatCard
+                        title="Active Drivers"
+                        :value="activeDriversCount"
+                        subtitle="+12% from yesterday"
+                        subtitle-type="success"
+                        :subtitle-icon="ArrowUpIcon"
+                        :icon="UserGroupIcon"
+                        icon-color="blue"
+                        :animation-delay="100"
+                    />
+                        
+                    <StatCard
+                        title="Active Vehicles"
+                        :value="activeVehiclesCount"
+                        subtitle="+8% from yesterday"
+                        subtitle-type="success"
+                        :subtitle-icon="ArrowUpIcon"
+                        :icon="TruckIcon"
+                        icon-color="green"
+                        :animation-delay="200"
+                    />
+                        
+                    <StatCard
+                        title="Open Incidents"
+                        :value="openIncidentsCount"
+                        subtitle="Needs attention"
+                        subtitle-type="warning"
+                        :subtitle-icon="ExclamationTriangleIcon"
+                        :icon="ExclamationTriangleIcon"
+                        icon-color="yellow"
+                        :animation-delay="300"
+                    />
+                        
+                    <StatCard
+                        title="SOS Alerts"
+                        :value="activeSosAlertsCount"
+                        :subtitle="activeSosAlertsCount > 0 ? 'URGENT' : 'All Clear'"
+                        :subtitle-type="activeSosAlertsCount > 0 ? 'danger' : 'success'"
+                        :icon="ShieldExclamationIcon"
+                        :icon-color="activeSosAlertsCount > 0 ? 'red' : 'gray'"
+                        :animation-delay="400"
+                    />
                 </div>
                 
                 <!-- Refresh Button -->
@@ -297,78 +332,63 @@ function addOrUpdateMarker(location) {
                 </div>
                 
                 <!-- Recent Activities -->
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Activities</h3>
+                <ModernTable
+                    title="Recent Activities"
+                    subtitle="Live tracking data from active drivers"
+                    :data="locations"
+                    :columns="[
+                        { key: 'driver.user.name', label: 'Driver' },
+                        { key: 'vehicle.plate_number', label: 'Vehicle' },
+                        { key: 'recorded_at', label: 'Last Seen' },
+                        { key: 'speed', label: 'Speed' },
+                        { key: 'status', label: 'Status' }
+                    ]"
+                    empty-title="No Active Drivers"
+                    empty-message="No drivers are currently sending location updates."
+                    class="mb-6">
                     
-                    <div v-if="locations.length === 0" class="text-gray-500 text-center py-8">
-                        <div class="text-6xl mb-4">📍</div>
-                        <div class="text-lg font-medium mb-2">No Active Drivers</div>
-                        <div class="text-sm">No drivers are currently sending location updates.</div>
-                    </div>
-                    
-                    <div v-else class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Seen</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Speed</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="location in locations" :key="location.id" class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10">
-                                                <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                                    <span class="text-blue-600 font-medium text-sm">
-                                                        {{ (location.driver?.user?.name || 'U').charAt(0).toUpperCase() }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900">
-                                                    {{ location.driver?.user?.name || 'Unknown Driver' }}
-                                                </div>
-                                                <div class="text-sm text-gray-500">
-                                                    {{ location.driver?.user?.email || 'No email' }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">
-                                            {{ location.vehicle?.plate_number || 'Unknown' }}
-                                        </div>
-                                        <div class="text-sm text-gray-500">
-                                            {{ location.vehicle?.model || 'Unknown Model' }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">
-                                            {{ new Date(location.recorded_at).toLocaleTimeString() }}
-                                        </div>
-                                        <div class="text-sm text-gray-500">
-                                            {{ new Date(location.recorded_at).toLocaleDateString() }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">
-                                            {{ location.speed ? `${Math.round(location.speed)} km/h` : 'N/A' }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                            Active
-                                        </span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    <template #cell-driver.user.name="{ item }">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                                <span class="text-white font-medium text-sm">
+                                    {{ (item.driver?.user?.name || 'U').charAt(0).toUpperCase() }}
+                                </span>
+                            </div>
+                            <div class="ml-3">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ item.driver?.user?.name || 'Unknown Driver' }}
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    {{ item.driver?.user?.email || 'No email' }}
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template #cell-vehicle.plate_number="{ item }">
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">{{ item.vehicle?.plate_number || 'Unknown' }}</div>
+                            <div class="text-sm text-gray-500">{{ item.vehicle?.model || 'Unknown Model' }}</div>
+                        </div>
+                    </template>
+
+                    <template #cell-recorded_at="{ item }">
+                        <div>
+                            <div class="text-sm text-gray-900">{{ new Date(item.recorded_at).toLocaleTimeString() }}</div>
+                            <div class="text-sm text-gray-500">{{ new Date(item.recorded_at).toLocaleDateString() }}</div>
+                        </div>
+                    </template>
+
+                    <template #cell-speed="{ item }">
+                        <div class="text-sm text-gray-900">
+                            {{ item.speed ? `${Math.round(item.speed)} km/h` : 'N/A' }}
+                        </div>
+                    </template>
+
+                    <template #cell-status="{ item }">
+                        <StatusBadge status="active" />
+                    </template>
+                </ModernTable>
             </div>
         </div>
     </AppLayout>
