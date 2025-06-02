@@ -92,6 +92,9 @@ class RouteController extends Controller
             'description' => 'nullable|string',
             'waypoints' => 'nullable|array',
             'stops' => 'nullable|array',
+            'stops.*.name' => 'required_with:stops|string|max:255',
+            'stops.*.lat' => 'required_with:stops|numeric|between:-90,90',
+            'stops.*.lng' => 'required_with:stops|numeric|between:-180,180',
             'distance_km' => 'nullable|numeric|min:0',
             'estimated_duration_minutes' => 'nullable|integer|min:1',
         ]);
@@ -121,8 +124,11 @@ class RouteController extends Controller
      */
     public function edit(Route $route)
     {
+        $vendors = Vendor::where('status', 'active')->get();
+        
         return Inertia::render('Routes/Edit', [
-            'route' => $route
+            'route' => $route,
+            'vendors' => $vendors,
         ]);
     }
 
@@ -131,7 +137,8 @@ class RouteController extends Controller
      */
     public function update(Request $request, Route $route)
     {
-        $request->validate([
+        $validated = $request->validate([
+            'vendor_id' => 'required|exists:vendors,id',
             'name' => 'required|string|max:255',
             'start_location' => 'required|string|max:255',
             'end_location' => 'required|string|max:255',
@@ -139,20 +146,12 @@ class RouteController extends Controller
             'distance_km' => 'nullable|numeric|min:0',
             'estimated_duration_minutes' => 'nullable|integer|min:1',
             'stops' => 'nullable|array',
-            'stops.*.name' => 'required|string|max:255',
-            'stops.*.lat' => 'required|numeric|between:-90,90',
-            'stops.*.lng' => 'required|numeric|between:-180,180',
+            'stops.*.name' => 'required_with:stops|string|max:255',
+            'stops.*.lat' => 'required_with:stops|numeric|between:-90,90',
+            'stops.*.lng' => 'required_with:stops|numeric|between:-180,180',
         ]);
 
-        $route->update([
-            'name' => $request->name,
-            'start_location' => $request->start_location,
-            'end_location' => $request->end_location,
-            'description' => $request->description,
-            'distance_km' => $request->distance_km,
-            'estimated_duration_minutes' => $request->estimated_duration_minutes,
-            'stops' => $request->stops,
-        ]);
+        $route->update($validated);
 
         return redirect()->route('routes.show', $route)
             ->with('success', 'Route updated successfully.');

@@ -92,8 +92,11 @@ class VehicleController extends Controller
      */
     public function edit(Vehicle $vehicle)
     {
+        $vendors = Vendor::where('status', 'active')->get();
+        
         return Inertia::render('Vehicles/Edit', [
-            'vehicle' => $vehicle
+            'vehicle' => $vehicle,
+            'vendors' => $vendors,
         ]);
     }
 
@@ -103,6 +106,7 @@ class VehicleController extends Controller
     public function update(Request $request, Vehicle $vehicle)
     {
         $request->validate([
+            'vendor_id' => 'required|exists:vendors,id',
             'plate_number' => 'required|string|max:255|unique:vehicles,plate_number,' . $vehicle->id,
             'model' => 'required|string|max:255',
             'type' => 'required|in:bus,van,car,truck,boat',

@@ -22,7 +22,7 @@ class DriverController extends Controller
         $query = Driver::with(['user', 'vendor']);
         
         // Apply search filter if provided
-        if ($request->has('search')) {
+        if ($request->has('search') && $request->search !== '') {
             $search = $request->search;
             $query->whereHas('user', function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")

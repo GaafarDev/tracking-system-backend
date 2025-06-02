@@ -6,23 +6,36 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::table('existing_tables', function (Blueprint $table) {
-            //
+        // Make vendor_id required in drivers table
+        Schema::table('drivers', function (Blueprint $table) {
+            $table->foreignId('vendor_id')->nullable(false)->change();
+        });
+
+        // Make vendor_id required in vehicles table
+        Schema::table('vehicles', function (Blueprint $table) {
+            $table->foreignId('vendor_id')->nullable(false)->change();
+        });
+
+        // Make vendor_id required in routes table
+        Schema::table('routes', function (Blueprint $table) {
+            $table->foreignId('vendor_id')->nullable(false)->change();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('existing_tables', function (Blueprint $table) {
-            //
+        Schema::table('drivers', function (Blueprint $table) {
+            $table->foreignId('vendor_id')->nullable()->change();
+        });
+
+        Schema::table('vehicles', function (Blueprint $table) {
+            $table->foreignId('vendor_id')->nullable()->change();
+        });
+
+        Schema::table('routes', function (Blueprint $table) {
+            $table->foreignId('vendor_id')->nullable()->change();
         });
     }
 };

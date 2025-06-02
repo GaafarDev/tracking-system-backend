@@ -68,6 +68,9 @@ const logout = () => {
                                 <NavLink :href="route('sos.index')" :active="route().current('sos.*')">
                                     SOS Alerts
                                 </NavLink>
+                                <NavLink :href="route('vendors.index')" :active="route().current('vendors.*')">
+                                    Vendors
+                                </NavLink>
                             </div>
                         </div>
 
@@ -228,6 +231,9 @@ const logout = () => {
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('sos.index')" :active="route().current('sos.*')">
                             SOS Alerts
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('vendors.index')" :active="route().current('vendors.*')">
+                            Vendors
                         </ResponsiveNavLink>
                     </div>
 

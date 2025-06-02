@@ -22,6 +22,9 @@ Route::get('/', function () {
     ]);
 });
 
+// VENDOR ROUTES
+Route::resource('vendors', VendorController::class);
+
 // Admin-only routes
 Route::middleware([
     'auth:sanctum',
@@ -31,9 +34,6 @@ Route::middleware([
 ])->group(function () {
     // Dashboard - Admin only
     Route::get('/dashboard', [App\Http\Controllers\API\DashboardController::class, 'index'])->name('dashboard');
-    
-    // VENDOR ROUTES
-    Route::resource('vendors', VendorController::class);
     
     // Existing resource controllers - Admin only
     Route::resource('drivers', DriverController::class);

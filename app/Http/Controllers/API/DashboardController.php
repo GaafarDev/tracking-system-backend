@@ -51,92 +51,161 @@ class DashboardController extends Controller
     /**
      * Get the latest dashboard statistics via API
      */
-    public function stats()
+    public function stats(Request $request)
     {
+        $vendorId = $request->get('vendor_id');
+        
         // Get active drivers from recent locations grouped by vendor
-        $activeDriversByVendor = Location::select('drivers.vendor_id', DB::raw('COUNT(DISTINCT locations.driver_id) as active_count'))
+        $activeDriversByVendorQuery = Location::select('drivers.vendor_id', DB::raw('COUNT(DISTINCT locations.driver_id) as active_count'))
             ->join('drivers', 'locations.driver_id', '=', 'drivers.id')
-            ->where('locations.recorded_at', '>=', now()->subMinutes(30))
-            ->groupBy('drivers.vendor_id')
+            ->where('locations.recorded_at', '>=', now()->subMinutes(30));
+        
+        if ($vendorId) {
+            $activeDriversByVendorQuery->where('drivers.vendor_id', $vendorId);
+        }
+        
+        $activeDriversByVendor = $activeDriversByVendorQuery->groupBy('drivers.vendor_id')
             ->with('vendor')
             ->get();
 
         // Get active vehicles from recent locations grouped by vendor
-        $activeVehiclesByVendor = Location::select('vehicles.vendor_id', DB::raw('COUNT(DISTINCT locations.vehicle_id) as active_count'))
+        $activeVehiclesByVendorQuery = Location::select('vehicles.vendor_id', DB::raw('COUNT(DISTINCT locations.vehicle_id) as active_count'))
             ->join('vehicles', 'locations.vehicle_id', '=', 'vehicles.id')
-            ->where('locations.recorded_at', '>=', now()->subMinutes(30))
-            ->groupBy('vehicles.vendor_id')
+            ->where('locations.recorded_at', '>=', now()->subMinutes(30));
+            
+        if ($vendorId) {
+            $activeVehiclesByVendorQuery->where('vehicles.vendor_id', $vendorId);
+        }
+        
+        $activeVehiclesByVendor = $activeVehiclesByVendorQuery->groupBy('vehicles.vendor_id')
             ->get();
+
+        // Apply vendor filtering to other stats
+        $vendorsQuery = Vendor::query();
+        $driversQuery = Driver::query();
+        $vehiclesQuery = Vehicle::query();
+        $routesQuery = Route::query();
+        $schedulesQuery = Schedule::query();
+        $incidentsQuery = Incident::query();
+        $sosAlertsQuery = SosAlert::query();
+        
+        if ($vendorId) {
+            $vendorsQuery->where('id', $vendorId);
+            $driversQuery->where('vendor_id', $vendorId);
+            $vehiclesQuery->where('vendor_id', $vendorId);
+            $routesQuery->where('vendor_id', $vendorId);
+            $schedulesQuery->where('vendor_id', $vendorId);
+            $incidentsQuery->whereHas('driver', function($q) use ($vendorId) {
+                $q->where('vendor_id', $vendorId);
+            });
+            $sosAlertsQuery->whereHas('driver', function($q) use ($vendorId) {
+                $q->where('vendor_id', $vendorId);
+            });
+        }
 
         // Overall stats
         $stats = [
             'vendors' => [
-                'total' => Vendor::count(),
-                'active' => Vendor::where('status', 'active')->count(),
-                'inactive' => Vendor::where('status', 'inactive')->count(),
-                'suspended' => Vendor::where('status', 'suspended')->count(),
+                'total' => $vendorsQuery->count(),
+                'active' => (clone $vendorsQuery)->where('status', 'active')->count(),
+                'inactive' => (clone $vendorsQuery)->where('status', 'inactive')->count(),
+                'suspended' => (clone $vendorsQuery)->where('status', 'suspended')->count(),
             ],
             'admins' => [
                 'total' => User::where('role', 'admin')->count(),
             ],
             'drivers' => [
-                'total' => Driver::count(),
-                'active' => Driver::where('status', 'active')->count(),
-                'inactive' => Driver::where('status', 'inactive')->count(),
-                'on_leave' => Driver::where('status', 'on_leave')->count(),
+                'total' => $driversQuery->count(),
+                'active' => (clone $driversQuery)->where('status', 'active')->count(),
+                'inactive' => (clone $driversQuery)->where('status', 'inactive')->count(),
+                'on_leave' => (clone $driversQuery)->where('status', 'on_leave')->count(),
             ],
             'vehicles' => [
-                'total' => Vehicle::count(),
-                'active' => Vehicle::where('status', 'active')->count(),
-                'maintenance' => Vehicle::where('status', 'maintenance')->count(),
-                'inactive' => Vehicle::where('status', 'inactive')->count(),
+                'total' => $vehiclesQuery->count(),
+                'active' => (clone $vehiclesQuery)->where('status', 'active')->count(),
+                'maintenance' => (clone $vehiclesQuery)->where('status', 'maintenance')->count(),
+                'inactive' => (clone $vehiclesQuery)->where('status', 'inactive')->count(),
             ],
             'routes' => [
-                'total' => Route::count(),
+                'total' => $routesQuery->count(),
             ],
             'schedules' => [
-                'total' => Schedule::count(),
-                'active' => Schedule::where('is_active', true)->count(),
+                'total' => $schedulesQuery->count(),
+                'active' => (clone $schedulesQuery)->where('is_active', true)->count(),
             ],
             'incidents' => [
-                'total' => Incident::count(),
-                'active' => Incident::whereIn('status', ['reported', 'in_progress'])->count(),
-                'resolved' => Incident::where('status', 'resolved')->count(),
+                'total' => $incidentsQuery->count(),
+                'active' => (clone $incidentsQuery)->whereIn('status', ['reported', 'in_progress'])->count(),
+                'resolved' => (clone $incidentsQuery)->where('status', 'resolved')->count(),
             ],
             'sos_alerts' => [
-                'total' => SosAlert::count(),
-                'active' => SosAlert::where('status', 'active')->count(),
+                'total' => $sosAlertsQuery->count(),
+                'active' => (clone $sosAlertsQuery)->where('status', 'active')->count(),
             ],
             // Enhanced stats with vendor breakdown
             'vendor_breakdown' => [
                 'drivers_by_vendor' => Driver::select('vendor_id', DB::raw('count(*) as total'))
                     ->with('vendor:id,name')
+                    ->when($vendorId, function($q) use ($vendorId) {
+                        return $q->where('vendor_id', $vendorId);
+                    })
                     ->groupBy('vendor_id')
                     ->get(),
                 'vehicles_by_vendor' => Vehicle::select('vendor_id', DB::raw('count(*) as total'))
                     ->with('vendor:id,name')
+                    ->when($vendorId, function($q) use ($vendorId) {
+                        return $q->where('vendor_id', $vendorId);
+                    })
                     ->groupBy('vendor_id')
                     ->get(),
                 'routes_by_vendor' => Route::select('vendor_id', DB::raw('count(*) as total'))
                     ->with('vendor:id,name')
+                    ->when($vendorId, function($q) use ($vendorId) {
+                        return $q->where('vendor_id', $vendorId);
+                    })
                     ->groupBy('vendor_id')
                     ->get(),
                 'incidents_by_vendor' => Incident::join('drivers', 'incidents.driver_id', '=', 'drivers.id')
                     ->select('drivers.vendor_id', DB::raw('count(*) as total'))
+                    ->when($vendorId, function($q) use ($vendorId) {
+                        return $q->where('drivers.vendor_id', $vendorId);
+                    })
                     ->groupBy('drivers.vendor_id')
                     ->get(),
             ],
-            // Keep existing fields for backwards compatibility
+            // Keep existing fields for backwards compatibility with vendor filtering
             'activeDriversCount' => Location::select('driver_id')
+                ->when($vendorId, function($q) use ($vendorId) {
+                    return $q->whereHas('driver', function($dq) use ($vendorId) {
+                        $dq->where('vendor_id', $vendorId);
+                    });
+                })
                 ->where('recorded_at', '>=', now()->subMinutes(30))
                 ->distinct()
                 ->count(),
             'activeVehiclesCount' => Location::select('vehicle_id')
+                ->when($vendorId, function($q) use ($vendorId) {
+                    return $q->whereHas('vehicle', function($vq) use ($vendorId) {
+                        $vq->where('vendor_id', $vendorId);
+                    });
+                })
                 ->where('recorded_at', '>=', now()->subMinutes(30))
                 ->distinct()
                 ->count(),
-            'openIncidentsCount' => Incident::whereIn('status', ['reported', 'in_progress'])->count(),
-            'activeSosAlertsCount' => SosAlert::where('status', 'active')->count(),
+            'openIncidentsCount' => Incident::whereIn('status', ['reported', 'in_progress'])
+                ->when($vendorId, function($q) use ($vendorId) {
+                    return $q->whereHas('driver', function($dq) use ($vendorId) {
+                        $dq->where('vendor_id', $vendorId);
+                    });
+                })
+                ->count(),
+            'activeSosAlertsCount' => SosAlert::where('status', 'active')
+                ->when($vendorId, function($q) use ($vendorId) {
+                    return $q->whereHas('driver', function($dq) use ($vendorId) {
+                        $dq->where('vendor_id', $vendorId);
+                    });
+                })
+                ->count(),
         ];
         
         return response()->json($stats);
