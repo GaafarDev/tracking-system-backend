@@ -285,4 +285,42 @@ class SosAlertController extends Controller
         
         return redirect()->back()->with('success', 'SOS alert marked as resolved.');
     }
+    
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(SosAlert $sosAlert)
+    {
+        $sosAlert->load(['driver.user']);
+        
+        return Inertia::render('SOS/Edit', [
+            'sosAlert' => $sosAlert
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, SosAlert $sosAlert)
+    {
+        $request->validate([
+            'status' => 'required|in:active,responded,resolved',
+            'message' => 'nullable|string',
+        ]);
+
+        $sosAlert->update($request->only(['status', 'message']));
+
+        // Notify the driver if status changed
+        if ($request->status !== $sosAlert->getOriginal('status')) {
+            Notification::create([
+                'user_id' => $sosAlert->driver->user_id,
+                'title' => 'SOS Alert Update',
+                'message' => "Your SOS alert status has been updated to: {$request->status}",
+                'type' => 'sos',
+            ]);
+        }
+
+        return redirect()->route('sos.show', $sosAlert)
+            ->with('success', 'SOS alert updated successfully.');
+    }
 }

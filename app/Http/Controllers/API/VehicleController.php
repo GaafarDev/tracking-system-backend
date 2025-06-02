@@ -62,51 +62,61 @@ class VehicleController extends Controller
             ->with('success', 'Vehicle created successfully.');
     }
 
+    /**
+     * Display the specified resource.
+     */
     public function show(Vehicle $vehicle)
     {
-        $vehicle->load(['schedules.driver.user', 'schedules.route']);
-        
-        // Get last known location
-        $lastLocation = $vehicle->locations()->with('driver.user')->latest('recorded_at')->first();
-        
+        $vehicle->load(['schedules' => function($query) {
+            $query->with(['driver.user', 'route'])->latest()->take(5);
+        }]);
+
         return Inertia::render('Vehicles/Show', [
-            'vehicle' => $vehicle,
-            'lastLocation' => $lastLocation,
+            'vehicle' => $vehicle
         ]);
     }
 
+    /**
+     * Show the form for editing the specified resource.
+     */
     public function edit(Vehicle $vehicle)
     {
         return Inertia::render('Vehicles/Edit', [
-            'vehicle' => $vehicle,
+            'vehicle' => $vehicle
         ]);
     }
 
+    /**
+     * Update the specified resource in storage.
+     */
     public function update(Request $request, Vehicle $vehicle)
     {
-        $validated = $request->validate([
-            'plate_number' => 'required|string|unique:vehicles,plate_number,' . $vehicle->id,
-            'model' => 'required|string',
+        $request->validate([
+            'plate_number' => 'required|string|max:255|unique:vehicles,plate_number,' . $vehicle->id,
+            'model' => 'required|string|max:255',
+            'type' => 'required|in:bus,van,car,truck,boat',
             'capacity' => 'required|integer|min:1',
-            'type' => 'required|in:bus,van,car,boat,other',
+            'year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
+            'color' => 'nullable|string|max:255',
+            'fuel_type' => 'nullable|in:petrol,diesel,electric,hybrid,cng',
             'status' => 'required|in:active,maintenance,inactive',
+            'engine_number' => 'nullable|string|max:255',
+            'chassis_number' => 'nullable|string|max:255',
         ]);
-        
-        $vehicle->update($validated);
-        
-        return redirect()->route('vehicles.index')
+
+        $vehicle->update($request->all());
+
+        return redirect()->route('vehicles.show', $vehicle)
             ->with('success', 'Vehicle updated successfully.');
     }
 
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(Vehicle $vehicle)
     {
-        // Check if vehicle is being used in schedules
-        if ($vehicle->schedules()->exists()) {
-            return back()->with('error', 'Cannot delete vehicle as it is assigned to schedules.');
-        }
-        
         $vehicle->delete();
-        
+
         return redirect()->route('vehicles.index')
             ->with('success', 'Vehicle deleted successfully.');
     }

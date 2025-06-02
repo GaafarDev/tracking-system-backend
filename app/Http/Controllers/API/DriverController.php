@@ -98,15 +98,26 @@ class DriverController extends Controller
         return Inertia::render('Drivers/Create');
     }
 
+    /**
+     * Display the specified resource.
+     */
     public function show(Driver $driver)
     {
-        $driver->load('user');
-        
+        $driver->load([
+            'user',
+            'schedules' => function($query) {
+                $query->with(['route', 'vehicle'])->latest()->take(5);
+            }
+        ]);
+
         return Inertia::render('Drivers/Show', [
             'driver' => $driver
         ]);
     }
 
+    /**
+     * Show the form for editing the specified resource.
+     */
     public function edit(Driver $driver)
     {
         $driver->load('user');
@@ -116,51 +127,47 @@ class DriverController extends Controller
         ]);
     }
 
+    /**
+     * Update the specified resource in storage.
+     */
     public function update(Request $request, Driver $driver)
     {
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,'.$driver->user_id,
-            'license_number' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $driver->user_id,
+            'license_number' => 'required|string|max:255|unique:drivers,license_number,' . $driver->id,
             'phone_number' => 'required|string|max:255',
-            'address' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
             'status' => 'required|in:active,inactive,on_leave',
         ]);
 
-        // Update user info
+        // Update user information
         $driver->user->update([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
+            'name' => $request->name,
+            'email' => $request->email,
         ]);
 
-        // Update driver info
+        // Update driver information
         $driver->update([
-            'license_number' => $validated['license_number'],
-            'phone_number' => $validated['phone_number'],
-            'address' => $validated['address'],
-            'status' => $validated['status'],
+            'license_number' => $request->license_number,
+            'phone_number' => $request->phone_number,
+            'address' => $request->address,
+            'status' => $request->status,
         ]);
 
-        return redirect()->route('drivers.index')
+        return redirect()->route('drivers.show', $driver)
             ->with('success', 'Driver updated successfully.');
     }
 
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(Driver $driver)
     {
-        // Check if driver is assigned to any schedules
-        if ($driver->schedules()->exists()) {
-            return back()->with('error', 'Cannot delete driver as they are assigned to schedules.');
-        }
-        
-        // Get the user ID before deleting the driver
-        $userId = $driver->user_id;
-        
-        // Delete the driver
+        $user = $driver->user;
         $driver->delete();
-        
-        // Delete the associated user
-        User::find($userId)->delete();
-        
+        $user->delete();
+
         return redirect()->route('drivers.index')
             ->with('success', 'Driver deleted successfully.');
     }

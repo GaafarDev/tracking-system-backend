@@ -90,51 +90,69 @@ class RouteController extends Controller
             ->with('success', 'Route created successfully.');
     }
 
+    /**
+     * Display the specified resource.
+     */
     public function show(Route $route)
     {
-        // Model casting automatically handles JSON decoding
+        $route->load(['schedules' => function($query) {
+            $query->with(['driver.user', 'vehicle'])->where('is_active', true);
+        }]);
+
         return Inertia::render('Routes/Show', [
-            'route' => $route,
+            'route' => $route
         ]);
     }
 
+    /**
+     * Show the form for editing the specified resource.
+     */
     public function edit(Route $route)
     {
-        // Model casting automatically handles JSON decoding
         return Inertia::render('Routes/Edit', [
-            'route' => $route,
+            'route' => $route
         ]);
     }
 
+    /**
+     * Update the specified resource in storage.
+     */
     public function update(Request $request, Route $route)
     {
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
             'start_location' => 'required|string|max:255',
             'end_location' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'waypoints' => 'nullable|array',
-            'stops' => 'nullable|array',
             'distance_km' => 'nullable|numeric|min:0',
             'estimated_duration_minutes' => 'nullable|integer|min:1',
+            'stops' => 'nullable|array',
+            'stops.*.name' => 'required|string|max:255',
+            'stops.*.lat' => 'required|numeric|between:-90,90',
+            'stops.*.lng' => 'required|numeric|between:-180,180',
         ]);
-        
-        // No need to manually encode JSON - model casting handles it
-        $route->update($validated);
-        
-        return redirect()->route('routes.index')
+
+        $route->update([
+            'name' => $request->name,
+            'start_location' => $request->start_location,
+            'end_location' => $request->end_location,
+            'description' => $request->description,
+            'distance_km' => $request->distance_km,
+            'estimated_duration_minutes' => $request->estimated_duration_minutes,
+            'stops' => $request->stops,
+        ]);
+
+        return redirect()->route('routes.show', $route)
             ->with('success', 'Route updated successfully.');
     }
 
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(Route $route)
     {
-        // Check if route is being used in any schedules
-        if ($route->schedules()->exists()) {
-            return back()->with('error', 'Cannot delete route as it is assigned to schedules.');
-        }
-        
         $route->delete();
-        
+
         return redirect()->route('routes.index')
             ->with('success', 'Route deleted successfully.');
     }

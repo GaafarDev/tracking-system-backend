@@ -197,42 +197,55 @@ class IncidentController extends Controller
         ]);
     }
 
+    /**
+     * Display the specified resource.
+     */
     public function show(Incident $incident)
     {
-        $incident->load('driver.user');
+        $incident->load(['driver.user']);
         
         return Inertia::render('Incidents/Show', [
-            'incident' => $incident,
+            'incident' => $incident
         ]);
     }
 
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Incident $incident)
+    {
+        $incident->load(['driver.user']);
+        
+        return Inertia::render('Incidents/Edit', [
+            'incident' => $incident
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
     public function update(Request $request, Incident $incident)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:reported,in_progress,resolved,closed',
-            'resolution_notes' => 'nullable|string',
+        $request->validate([
+            'type' => 'required|in:accident,breakdown,road_obstruction,weather,other',
+            'description' => 'required|string',
+            'status' => 'required|in:reported,in_progress,resolved',
+            'severity' => 'required|in:low,medium,high,critical',
         ]);
-        
-        // If status changed to resolved, update resolved_at timestamp
-        if ($validated['status'] === 'resolved' && $incident->status !== 'resolved') {
-            $validated['resolved_at'] = now();
-        }
-        
-        $incident->update($validated);
-        
-        return redirect()->route('incidents.index')
+
+        $incident->update($request->only(['type', 'description', 'status', 'severity']));
+
+        return redirect()->route('incidents.show', $incident)
             ->with('success', 'Incident updated successfully.');
     }
 
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(Incident $incident)
     {
-        // Delete associated photo if exists
-        if ($incident->photo_path) {
-            Storage::disk('public')->delete($incident->photo_path);
-        }
-        
         $incident->delete();
-        
+
         return redirect()->route('incidents.index')
             ->with('success', 'Incident deleted successfully.');
     }

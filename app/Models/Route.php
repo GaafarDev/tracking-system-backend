@@ -14,13 +14,15 @@ class Route extends Model
         'start_location',
         'end_location',
         'description',
-        'waypoints',
-        'stops',
         'distance_km',
         'estimated_duration_minutes',
+        'stops',
+        'waypoints'
     ];
 
     protected $casts = [
+        'stops' => 'array',
+        'waypoints' => 'array',
         'distance_km' => 'decimal:2',
         'estimated_duration_minutes' => 'integer',
     ];
@@ -28,5 +30,10 @@ class Route extends Model
     public function schedules()
     {
         return $this->hasMany(Schedule::class);
+    }
+
+    public function incidents()
+    {
+        return $this->hasMany(Incident::class);
     }
 }
