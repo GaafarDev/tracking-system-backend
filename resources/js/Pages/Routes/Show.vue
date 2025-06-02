@@ -3,10 +3,10 @@
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Route: {{ route.name }}
+                    Route: {{ routeData.name }}
                 </h2>
                 <div class="flex space-x-2">
-                    <Link :href="route('routes.edit', route.id)" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
+                    <Link :href="$route('routes.edit', routeData.id)" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
                         Edit Route
                     </Link>
                     <button @click="confirmDelete" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700">
@@ -27,27 +27,27 @@
                             
                             <div class="space-y-4">
                                 <div>
-                                    <h4 class="text-xl font-semibold text-gray-900">{{ route.name }}</h4>
-                                    <p v-if="route.description" class="text-gray-600 mt-1">{{ route.description }}</p>
+                                    <h4 class="text-xl font-semibold text-gray-900">{{ routeData.name }}</h4>
+                                    <p v-if="routeData.description" class="text-gray-600 mt-1">{{ routeData.description }}</p>
                                 </div>
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
                                     <div>
                                         <span class="text-sm font-medium text-gray-500">Distance</span>
                                         <p class="text-lg font-semibold text-gray-900">
-                                            {{ route.distance_km ? `${route.distance_km} km` : 'N/A' }}
+                                            {{ routeData.distance_km ? `${routeData.distance_km} km` : 'N/A' }}
                                         </p>
                                     </div>
                                     <div>
                                         <span class="text-sm font-medium text-gray-500">Estimated Duration</span>
                                         <p class="text-lg font-semibold text-gray-900">
-                                            {{ formatDuration(route.estimated_duration_minutes) }}
+                                            {{ formatDuration(routeData.estimated_duration_minutes) }}
                                         </p>
                                     </div>
                                     <div>
                                         <span class="text-sm font-medium text-gray-500">Number of Stops</span>
                                         <p class="text-lg font-semibold text-gray-900">
-                                            {{ getStopsCount(route) }}
+                                            {{ getStopsCount(routeData) }}
                                         </p>
                                     </div>
                                 </div>
@@ -55,20 +55,20 @@
                         </div>
 
                         <!-- Route Stops -->
-                        <div v-if="route.stops && route.stops.length > 0" class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+                        <div v-if="routeData.stops && routeData.stops.length > 0" class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-lg font-medium text-gray-900">Route Stops</h3>
-                                <span class="text-sm text-gray-500">{{ route.stops.length }} stops</span>
+                                <span class="text-sm text-gray-500">{{ routeData.stops.length }} stops</span>
                             </div>
                             
                             <div class="space-y-4">
-                                <div v-for="(stop, index) in route.stops" :key="index" class="flex items-start">
+                                <div v-for="(stop, index) in routeData.stops" :key="index" class="flex items-start">
                                     <div class="flex-shrink-0 mr-4">
                                         <div class="flex items-center justify-center w-8 h-8 rounded-full" 
-                                             :class="getStopNumberClass(index, route.stops.length)">
+                                             :class="getStopNumberClass(index, routeData.stops.length)">
                                             <span class="text-sm font-medium text-white">{{ index + 1 }}</span>
                                         </div>
-                                        <div v-if="index < route.stops.length - 1" class="w-0.5 h-8 bg-gray-300 mx-auto mt-2"></div>
+                                        <div v-if="index < routeData.stops.length - 1" class="w-0.5 h-8 bg-gray-300 mx-auto mt-2"></div>
                                     </div>
                                     <div class="flex-1">
                                         <h4 class="text-sm font-medium text-gray-900">{{ stop.name || `Stop ${index + 1}` }}</h4>
@@ -81,11 +81,11 @@
                         </div>
 
                         <!-- Waypoints -->
-                        <div v-if="route.waypoints && route.waypoints.length > 0" class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+                        <div v-if="routeData.waypoints && routeData.waypoints.length > 0" class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                             <h3 class="text-lg font-medium text-gray-900 mb-4">Waypoints</h3>
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div v-for="(waypoint, index) in route.waypoints" :key="index" class="p-3 bg-gray-50 rounded-lg">
+                                <div v-for="(waypoint, index) in routeData.waypoints" :key="index" class="p-3 bg-gray-50 rounded-lg">
                                     <h4 class="text-sm font-medium text-gray-900">Waypoint {{ index + 1 }}</h4>
                                     <p class="text-xs text-gray-500 font-mono">
                                         {{ waypoint.lat }}, {{ waypoint.lng }}
@@ -105,7 +105,7 @@
                 </div>
 
                 <!-- Assigned Schedules -->
-                <div v-if="route.schedules && route.schedules.length > 0" class="mt-6">
+                <div v-if="routeData.schedules && routeData.schedules.length > 0" class="mt-6">
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Assigned Schedules</h3>
                         
@@ -121,7 +121,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="schedule in route.schedules" :key="schedule.id">
+                                    <tr v-for="schedule in routeData.schedules" :key="schedule.id">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {{ schedule.driver?.user?.name || 'Unknown' }}
                                         </td>
@@ -149,7 +149,7 @@
 
                 <!-- Back Button -->
                 <div class="mt-6">
-                    <Link :href="route('routes.index')" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    <Link :href="$route('routes.index')" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
                         ← Back to Routes
                     </Link>
                 </div>
@@ -166,6 +166,9 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 const props = defineProps({
     route: Object,
 });
+
+// Rename to avoid conflict with route() function
+const routeData = props.route;
 
 let map = null;
 
@@ -188,10 +191,10 @@ function initMap() {
         }).addTo(map);
         
         // Add route stops if available
-        if (props.route.stops && props.route.stops.length > 0) {
+        if (routeData.stops && routeData.stops.length > 0) {
             const bounds = L.latLngBounds();
             
-            props.route.stops.forEach((stop, index) => {
+            routeData.stops.forEach((stop, index) => {
                 if (stop.lat && stop.lng) {
                     const lat = parseFloat(stop.lat);
                     const lng = parseFloat(stop.lng);
@@ -199,7 +202,7 @@ function initMap() {
                     // Create stop marker
                     const stopIcon = L.divIcon({
                         html: `<div style="
-                            background-color: ${getStopColor(index, props.route.stops.length)};
+                            background-color: ${getStopColor(index, routeData.stops.length)};
                             color: white;
                             width: 30px;
                             height: 30px;
@@ -228,8 +231,8 @@ function initMap() {
             });
             
             // Draw route line if there are multiple stops
-            if (props.route.stops.length > 1) {
-                const routePoints = props.route.stops
+            if (routeData.stops.length > 1) {
+                const routePoints = routeData.stops
                     .filter(stop => stop.lat && stop.lng)
                     .map(stop => [parseFloat(stop.lat), parseFloat(stop.lng)]);
                 
@@ -249,8 +252,8 @@ function initMap() {
         }
         
         // Add waypoints if available
-        if (props.route.waypoints && props.route.waypoints.length > 0) {
-            props.route.waypoints.forEach((waypoint, index) => {
+        if (routeData.waypoints && routeData.waypoints.length > 0) {
+            routeData.waypoints.forEach((waypoint, index) => {
                 if (waypoint.lat && waypoint.lng) {
                     const lat = parseFloat(waypoint.lat);
                     const lng = parseFloat(waypoint.lng);
@@ -302,8 +305,13 @@ function getStopColor(index, total) {
 }
 
 function confirmDelete() {
-    if (confirm(`Are you sure you want to delete the route "${props.route.name}"? This action cannot be undone.`)) {
-        router.delete(route('routes.destroy', props.route.id));
+    if (confirm(`Are you sure you want to delete the route "${routeData.name}"? This action cannot be undone.`)) {
+        router.delete($route('routes.destroy', routeData.id));
     }
+}
+
+// Helper function to access the route helper
+function $route(name, params) {
+    return route(name, params);
 }
 </script>

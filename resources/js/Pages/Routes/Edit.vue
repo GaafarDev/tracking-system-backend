@@ -2,7 +2,7 @@
     <AppLayout title="Edit Route">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Edit Route: {{ route.name }}
+                Edit Route: {{ routeData.name }}
             </h2>
         </template>
 
@@ -214,7 +214,7 @@
 
                         <div class="flex items-center justify-end mt-6 space-x-4">
                             <Link
-                                :href="route('routes.show', route.id)"
+                                :href="$route('routes.show', routeData.id)"
                                 class="inline-flex items-center px-4 py-2 bg-gray-300 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-400 active:bg-gray-500 focus:outline-none focus:border-gray-500 focus:shadow-outline-gray transition ease-in-out duration-150"
                             >
                                 Cancel
@@ -242,14 +242,17 @@ const props = defineProps({
     route: Object,
 });
 
+// Rename to avoid conflict with route() function
+const routeData = props.route;
+
 // Initialize form with existing route data
 const form = useForm({
-    name: props.route.name || '',
-    description: props.route.description || '',
-    distance_km: props.route.distance_km || '',
-    estimated_duration_minutes: props.route.estimated_duration_minutes || '',
-    stops: props.route.stops ? [...props.route.stops] : [],
-    waypoints: props.route.waypoints ? [...props.route.waypoints] : []
+    name: routeData.name || '',
+    description: routeData.description || '',
+    distance_km: routeData.distance_km || '',
+    estimated_duration_minutes: routeData.estimated_duration_minutes || '',
+    stops: routeData.stops ? [...routeData.stops] : [],
+    waypoints: routeData.waypoints ? [...routeData.waypoints] : []
 });
 
 const addStop = () => {
@@ -284,7 +287,7 @@ const getStopBadgeClass = (index) => {
 };
 
 const submit = () => {
-    form.put(route('routes.update', props.route.id), {
+    form.put($route('routes.update', routeData.id), {
         preserveScroll: true,
         onSuccess: () => {
             // Redirect to show page on success
@@ -294,4 +297,9 @@ const submit = () => {
         }
     });
 };
+
+// Helper function to access the route helper
+function $route(name, params) {
+    return route(name, params);
+}
 </script>
