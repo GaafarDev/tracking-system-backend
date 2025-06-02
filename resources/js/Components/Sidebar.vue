@@ -7,11 +7,13 @@
         <div class="flex items-center flex-shrink-0 px-6 pb-4">
           <Link :href="route('dashboard')" class="flex items-center group">
             <div class="relative">
-              <ApplicationMark class="h-10 w-auto text-primary-600 transition-transform group-hover:scale-105" />
+              <div class="h-10 w-10 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-xl flex items-center justify-center transform transition-transform group-hover:scale-105">
+                <span class="text-white font-bold text-xl">ML</span>
+              </div>
               <div class="absolute -inset-2 bg-primary-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
             <div class="ml-3">
-              <span class="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">MaraLinear</span>
+              <span class="text-2xl font-bold text-gradient-primary">MaraLinear</span>
               <div class="text-xs text-gray-500 font-medium">Transport Management</div>
             </div>
           </Link>

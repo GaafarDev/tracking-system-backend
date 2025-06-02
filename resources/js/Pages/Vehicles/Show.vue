@@ -101,22 +101,22 @@
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Usage Statistics</h3>
                         
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="text-center p-4 bg-blue-50 rounded-lg">
-                                <div class="text-2xl font-bold text-blue-600">{{ vehicle.schedules_count || 0 }}</div>
-                                <div class="text-sm text-blue-600">Schedules</div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="card-modern p-4 text-center hover-lift">
+                                <div class="text-2xl font-bold text-primary-600">{{ vehicle.total_distance || 0 }} km</div>
+                                <div class="text-sm text-gray-600">Total Distance</div>
                             </div>
-                            <div class="text-center p-4 bg-green-50 rounded-lg">
-                                <div class="text-2xl font-bold text-green-600">{{ vehicle.total_distance || 0 }} km</div>
-                                <div class="text-sm text-green-600">Total Distance</div>
+                            <div class="card-modern p-4 text-center hover-lift">
+                                <div class="text-2xl font-bold text-secondary-600">{{ vehicle.maintenance_count || 0 }}</div>
+                                <div class="text-sm text-gray-600">Maintenance</div>
                             </div>
-                            <div class="text-center p-4 bg-yellow-50 rounded-lg">
-                                <div class="text-2xl font-bold text-yellow-600">{{ vehicle.maintenance_count || 0 }}</div>
-                                <div class="text-sm text-yellow-600">Maintenance</div>
-                            </div>
-                            <div class="text-center p-4 bg-purple-50 rounded-lg">
+                            <div class="card-modern p-4 text-center hover-lift">
                                 <div class="text-2xl font-bold text-purple-600">{{ vehicle.incident_count || 0 }}</div>
-                                <div class="text-sm text-purple-600">Incidents</div>
+                                <div class="text-sm text-gray-600">Incidents</div>
+                            </div>
+                            <div class="card-modern p-4 text-center hover-lift">
+                                <div class="text-2xl font-bold text-green-600">{{ vehicle.uptime || '99.9' }}%</div>
+                                <div class="text-sm text-gray-600">Uptime</div>
                             </div>
                         </div>
                     </div>

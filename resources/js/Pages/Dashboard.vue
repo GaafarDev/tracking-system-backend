@@ -219,43 +219,87 @@ function addOrUpdateMarker(location) {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Dashboard Overview Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <DashboardCard
-                    title="Active Drivers"
-                    :value="activeDriversCount"
-                    :icon="UserGroupIcon"
-                    icon-color="text-blue-600"
-                    icon-bg-color="bg-blue-100"
-                    :trend="{ direction: 'up', value: 12 }"
-                    description="Currently on duty"
-                />
-                
-                <DashboardCard
-                    title="Active Vehicles"
-                    :value="activeVehiclesCount"
-                    :icon="TruckIcon"
-                    icon-color="text-emerald-600"
-                    icon-bg-color="bg-emerald-100"
-                    :trend="{ direction: 'up', value: 8 }"
-                    description="In operation"
-                />
-                
-                <DashboardCard
-                    title="Open Incidents"
-                    :value="openIncidentsCount"
-                    :icon="ExclamationTriangleIcon"
-                    icon-color="text-orange-600"
-                    icon-bg-color="bg-orange-100"
-                    description="Require attention"
-                />
-                
-                <DashboardCard
-                    title="SOS Alerts"
-                    :value="activeSosAlertsCount"
-                    :icon="ShieldExclamationIcon"
-                    :icon-color="activeSosAlertsCount > 0 ? 'text-red-600' : 'text-gray-600'"
-                    :icon-bg-color="activeSosAlertsCount > 0 ? 'bg-red-100' : 'bg-gray-100'"
-                    description="Emergency alerts"
-                />
+                <div class="card-modern p-6 hover-lift">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Active Drivers</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-2">{{ activeDriversCount }}</p>
+                            <div class="flex items-center mt-2">
+                                <div class="flex items-center text-green-500 text-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    +12%
+                                </div>
+                                <span class="text-gray-500 text-sm ml-2">vs last week</span>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl">
+                            <UserGroupIcon class="w-8 h-8 text-white" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-modern p-6 hover-lift">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Active Vehicles</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-2">{{ activeVehiclesCount }}</p>
+                            <div class="flex items-center mt-2">
+                                <div class="flex items-center text-green-500 text-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    +8%
+                                </div>
+                                <span class="text-gray-500 text-sm ml-2">vs last week</span>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl">
+                            <TruckIcon class="w-8 h-8 text-white" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-modern p-6 hover-lift">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Open Incidents</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-2">{{ openIncidentsCount }}</p>
+                            <div class="flex items-center mt-2">
+                                <div class="flex items-center text-red-500 text-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    -5%
+                                </div>
+                                <span class="text-gray-500 text-sm ml-2">vs last week</span>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl">
+                            <ExclamationTriangleIcon class="w-8 h-8 text-white" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-modern p-6 hover-lift">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">SOS Alerts</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-2">{{ activeSosAlertsCount }}</p>
+                            <div class="flex items-center mt-2">
+                                <div :class="activeSosAlertsCount > 0 ? 'text-red-500' : 'text-green-500'" class="flex items-center text-sm">
+                                    <div :class="activeSosAlertsCount > 0 ? 'bg-red-500' : 'bg-green-500'" class="w-2 h-2 rounded-full mr-2"></div>
+                                    {{ activeSosAlertsCount > 0 ? 'Active' : 'Normal' }}
+                                </div>
+                                <span class="text-gray-500 text-sm ml-2">status</span>
+                            </div>
+                        </div>
+                        <div :class="activeSosAlertsCount > 0 ? 'bg-gradient-to-r from-red-500 to-red-600' : 'bg-gradient-to-r from-gray-400 to-gray-500'" class="p-3 rounded-xl">
+                            <ShieldExclamationIcon class="w-8 h-8 text-white" />
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Live Map -->
@@ -286,15 +330,15 @@ function addOrUpdateMarker(location) {
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
                         <div class="space-y-3">
-                            <router-link :href="route('drivers.create')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <Link :href="route('drivers.create')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 Add New Driver
-                            </router-link>
-                            <router-link :href="route('vehicles.create')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            </Link>
+                            <Link :href="route('vehicles.create')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 Add New Vehicle
-                            </router-link>
-                            <router-link :href="route('routes.create')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            </Link>
+                            <Link :href="route('routes.create')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 Create Route
-                            </router-link>
+                            </Link>
                         </div>
                     </div>
                     

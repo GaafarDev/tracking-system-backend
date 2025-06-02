@@ -18,7 +18,7 @@
                                     id="name"
                                     v-model="form.name"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.name" class="mt-2" />
@@ -31,7 +31,7 @@
                                     id="email"
                                     v-model="form.email"
                                     type="email"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.email" class="mt-2" />
@@ -44,7 +44,7 @@
                                     id="license_number"
                                     v-model="form.license_number"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.license_number" class="mt-2" />
@@ -57,7 +57,7 @@
                                     id="phone_number"
                                     v-model="form.phone_number"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="input-modern"
                                     required
                                 />
                                 <InputError :message="form.errors.phone_number" class="mt-2" />
@@ -69,7 +69,7 @@
                                 <textarea
                                     id="address"
                                     v-model="form.address"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    class="input-modern"
                                     rows="3"
                                 ></textarea>
                                 <InputError :message="form.errors.address" class="mt-2" />
@@ -81,7 +81,7 @@
                                 <select 
                                     id="status"
                                     v-model="form.status"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    class="input-modern"
                                     required
                                 >
                                     <option value="active">Active</option>

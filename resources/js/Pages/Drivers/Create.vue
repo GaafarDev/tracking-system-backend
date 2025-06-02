@@ -52,66 +52,54 @@
 
                         <!-- Name -->
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-                                Full Name <span class="text-red-500">*</span>
-                            </label>
-                            <input
+                            <InputLabel for="name" value="Full Name" />
+                            <TextInput
                                 id="name"
                                 v-model="form.name"
                                 type="text"
-                                class="form-input"
-                                placeholder="Enter driver's full name"
+                                class="input-modern"
                                 required
                             />
-                            <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</p>
+                            <InputError :message="form.errors.name" class="mt-2" />
                         </div>
 
                         <!-- Email -->
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                                Email Address <span class="text-red-500">*</span>
-                            </label>
-                            <input
+                            <InputLabel for="email" value="Email Address" />
+                            <TextInput
                                 id="email"
                                 v-model="form.email"
                                 type="email"
-                                class="form-input"
-                                placeholder="driver@example.com"
+                                class="input-modern"
                                 required
                             />
-                            <p v-if="form.errors.email" class="mt-1 text-sm text-red-600">{{ form.errors.email }}</p>
+                            <InputError :message="form.errors.email" class="mt-2" />
                         </div>
 
                         <!-- License Number -->
                         <div>
-                            <label for="license_number" class="block text-sm font-medium text-gray-700 mb-2">
-                                License Number <span class="text-red-500">*</span>
-                            </label>
-                            <input
+                            <InputLabel for="license_number" value="License Number" />
+                            <TextInput
                                 id="license_number"
                                 v-model="form.license_number"
                                 type="text"
-                                class="form-input"
-                                placeholder="Enter license number"
+                                class="input-modern"
                                 required
                             />
-                            <p v-if="form.errors.license_number" class="mt-1 text-sm text-red-600">{{ form.errors.license_number }}</p>
+                            <InputError :message="form.errors.license_number" class="mt-2" />
                         </div>
 
                         <!-- Phone Number -->
                         <div>
-                            <label for="phone_number" class="block text-sm font-medium text-gray-700 mb-2">
-                                Phone Number <span class="text-red-500">*</span>
-                            </label>
-                            <input
+                            <InputLabel for="phone_number" value="Phone Number" />
+                            <TextInput
                                 id="phone_number"
                                 v-model="form.phone_number"
-                                type="tel"
-                                class="form-input"
-                                placeholder="+60123456789"
+                                type="text"
+                                class="input-modern"
                                 required
                             />
-                            <p v-if="form.errors.phone_number" class="mt-1 text-sm text-red-600">{{ form.errors.phone_number }}</p>
+                            <InputError :message="form.errors.phone_number" class="mt-2" />
                         </div>
 
                         <!-- Address -->
@@ -148,12 +136,12 @@
                         </div>
                     </div>
 
-                    <!-- Form Actions -->
-                    <div class="flex items-center justify-end mt-8 pt-6 border-t border-gray-200 space-x-3">
-                        <Link :href="route('drivers.index')" class="btn-secondary">
+                    <!-- Action Buttons -->
+                    <div class="flex items-center justify-end mt-6 space-x-4">
+                        <Link :href="route('drivers.index')" class="btn-secondary-modern">
                             Cancel
                         </Link>
-                        <button type="submit" :disabled="form.processing" class="btn-primary">
+                        <PrimaryButton class="btn-modern" :disabled="form.processing">
                             <span v-if="form.processing" class="inline-flex items-center">
                                 <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -162,7 +150,7 @@
                                 Creating...
                             </span>
                             <span v-else>Create Driver</span>
-                        </button>
+                        </PrimaryButton>
                     </div>
                 </form>
             </div>

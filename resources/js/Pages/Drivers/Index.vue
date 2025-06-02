@@ -28,16 +28,17 @@ watch([search, filterStatus], ([newSearch, newStatus]) => {
     }, 300);
 });
 
+// Update status badges function
 function getStatusColor(status) {
     switch (status) {
         case 'active':
-            return 'bg-green-100 text-green-800 border border-green-200';
+            return 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300 shadow-sm';
         case 'inactive':
-            return 'bg-gray-100 text-gray-800 border border-gray-200';
+            return 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300 shadow-sm';
         case 'on_leave':
-            return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+            return 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300 shadow-sm';
         default:
-            return 'bg-gray-100 text-gray-800 border border-gray-200';
+            return 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300 shadow-sm';
     }
 }
 

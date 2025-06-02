@@ -145,15 +145,15 @@
 
                 <!-- Action Buttons -->
                 <div class="mt-6 flex space-x-4">
-                    <Link :href="route('drivers.index')" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    <Link :href="route('drivers.index')" class="btn-secondary-modern">
                         ← Back to Drivers
                     </Link>
                     
-                    <Link :href="route('drivers.edit', driver.id)" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
+                    <Link :href="route('drivers.edit', driver.id)" class="btn-modern">
                         Edit Driver
                     </Link>
                     
-                    <button @click="confirmDelete" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700">
+                    <button @click="confirmDelete" class="btn-danger">
                         Delete Driver
                     </button>
                 </div>

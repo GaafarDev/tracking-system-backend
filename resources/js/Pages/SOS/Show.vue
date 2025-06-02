@@ -15,51 +15,32 @@
                     </div>
 
                     <!-- SOS Alert Information -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">Alert Details</h3>
-                            <dl class="space-y-3">
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500">Driver</dt>
-                                    <dd class="text-sm text-gray-900">{{ sosAlertData.driver?.user?.name || 'Unknown' }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500">Status</dt>
-                                    <dd class="text-sm text-gray-900">
-                                        <span :class="['px-2 inline-flex text-xs leading-5 font-semibold rounded-full', getStatusColor(sosAlertData.status)]">
-                                            {{ sosAlertData.status?.charAt(0).toUpperCase() + sosAlertData.status?.slice(1) }}
-                                        </span>
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500">Message</dt>
-                                    <dd class="text-sm text-gray-900">{{ sosAlertData.message || 'No message provided' }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500">Location</dt>
-                                    <dd class="text-sm text-gray-900">
-                                        {{ formatCoordinate(sosAlertData.latitude) }}, {{ formatCoordinate(sosAlertData.longitude) }}
-                                    </dd>
-                                </div>
-                            </dl>
-                        </div>
+                    <div class="card-modern p-6 space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">SOS Alert Details</h3>
                         
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">Timeline</h3>
-                            <dl class="space-y-3">
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500">Alert Time</dt>
-                                    <dd class="text-sm text-gray-900">{{ formatDateTime(sosAlertData.created_at) }}</dd>
-                                </div>
-                                <div v-if="sosAlertData.responded_at">
-                                    <dt class="text-sm font-medium text-gray-500">Responded At</dt>
-                                    <dd class="text-sm text-gray-900">{{ formatDateTime(sosAlertData.responded_at) }}</dd>
-                                </div>
-                                <div v-if="sosAlertData.resolved_at">
-                                    <dt class="text-sm font-medium text-gray-500">Resolved At</dt>
-                                    <dd class="text-sm text-gray-900">{{ formatDateTime(sosAlertData.resolved_at) }}</dd>
-                                </div>
-                            </dl>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Driver</dt>
+                                <dd class="text-sm text-gray-900 font-semibold">{{ sosAlertData.driver?.user?.name || 'Unknown' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Status</dt>
+                                <dd class="text-sm text-gray-900">
+                                    <span :class="['px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-xl', getStatusColor(sosAlertData.status)]">
+                                        {{ sosAlertData.status?.charAt(0).toUpperCase() + sosAlertData.status?.slice(1) }}
+                                    </span>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Message</dt>
+                                <dd class="text-sm text-gray-900">{{ sosAlertData.message || 'No message provided' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Location</dt>
+                                <dd class="text-sm text-gray-900">
+                                    {{ sosAlertData.latitude }}, {{ sosAlertData.longitude }}
+                                </dd>
+                            </div>
                         </div>
                     </div>
 

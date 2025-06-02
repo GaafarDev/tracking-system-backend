@@ -198,6 +198,10 @@ const stats = {
 </script>
 
 <template>
+    <Head>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
+    </Head>
+    
     <AppLayout title="SOS Alerts">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Active SOS Alert Banner -->
@@ -228,7 +232,7 @@ const stats = {
                 </div>
             </div>
 
-            <!-- Stats Overview -->
+            <!-- Stats Overview - Always show -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <DashboardCard
                     title="Total Alerts"
@@ -282,26 +286,22 @@ const stats = {
                 </div>
 
                 <!-- Filters -->
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                <div class="px-6 py-4 bg-gradient-to-r from-primary-50 to-secondary-50 border-b border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
-                            <div class="relative">
-                                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                </svg>
-                                <input
-                                    v-model="search"
-                                    type="text"
-                                    placeholder="Search SOS alerts..."
-                                    class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                                />
-                            </div>
+                            <input 
+                                v-model="search"
+                                type="text" 
+                                placeholder="Search alerts..." 
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
                         </div>
                         <div>
                             <select 
                                 v-model="filterStatus"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
-                                <option value="all">All Statuses</option>
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="all">All Status</option>
                                 <option value="active">Active</option>
                                 <option value="responded">Responded</option>
                                 <option value="resolved">Resolved</option>
@@ -310,7 +310,8 @@ const stats = {
                         <div>
                             <select 
                                 v-model="filterDriver"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
                                 <option value="all">All Drivers</option>
                                 <option v-for="driver in props.drivers" :key="driver.id" :value="driver.id">
                                     {{ driver.user.name }}
@@ -318,25 +319,10 @@ const stats = {
                             </select>
                         </div>
                         <div>
-                            <input 
-                                v-model="dateRange.from" 
-                                type="date" 
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                                placeholder="From date"
-                            />
-                        </div>
-                        <div>
-                            <input 
-                                v-model="dateRange.to" 
-                                type="date" 
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                                placeholder="To date"
-                            />
-                        </div>
-                        <div>
                             <button 
                                 @click="clearFilters"
-                                class="w-full btn-secondary">
+                                class="w-full px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                            >
                                 Clear Filters
                             </button>
                         </div>
@@ -407,29 +393,6 @@ const stats = {
                             </tr>
                         </tbody>
                     </table>
-                </div>
-
-                <!-- Pagination -->
-                <div v-if="props.sosAlerts.data.length > 0" class="px-6 py-4 border-t border-gray-200 bg-gray-50">
-                    <div class="flex items-center justify-between">
-                        <div class="text-sm text-gray-700">
-                            Showing {{ props.sosAlerts.from || 0 }} to {{ props.sosAlerts.to || 0 }} of {{ props.sosAlerts.total || 0 }} alerts
-                        </div>
-                        <div class="flex space-x-2">
-                            <Link 
-                                v-if="props.sosAlerts.prev_page_url" 
-                                :href="props.sosAlerts.prev_page_url" 
-                                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-150">
-                                Previous
-                            </Link>
-                            <Link 
-                                v-if="props.sosAlerts.next_page_url" 
-                                :href="props.sosAlerts.next_page_url" 
-                                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-150">
-                                Next
-                            </Link>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\SosAlert;
 use App\Models\Notification;
 use App\Models\Driver;
+use App\Models\Vehicle;
+use App\Models\Route;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
@@ -178,60 +180,30 @@ class SosAlertController extends Controller
     // Admin methods for web interface
     public function index(Request $request)
     {
-        $query = SosAlert::with('driver.user');
+        $query = SosAlert::with(['driver.user']);
         
-        // Apply search filter
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('message', 'like', "%{$search}%")
-                  ->orWhereHas('driver.user', function($userQuery) use ($search) {
-                      $userQuery->where('name', 'like', "%{$search}%")
-                                ->orWhere('email', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('driver', function($driverQuery) use ($search) {
-                      $driverQuery->where('license_number', 'like', "%{$search}%")
-                                  ->orWhere('phone_number', 'like', "%{$search}%");
-                  });
+        // Apply filters
+        if ($request->filled('search')) {
+            $query->whereHas('driver.user', function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%');
             });
         }
         
-        // Apply status filter
-        if ($request->has('status') && $request->status !== 'all' && !empty($request->status)) {
+        if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
         
-        // Apply driver filter
-        if ($request->has('driver_id') && $request->driver_id !== 'all' && !empty($request->driver_id)) {
+        if ($request->filled('driver_id') && $request->driver_id !== 'all') {
             $query->where('driver_id', $request->driver_id);
         }
         
-        // Apply date range filters
-        if ($request->has('from_date') && !empty($request->from_date)) {
-            $query->whereDate('created_at', '>=', $request->from_date);
-        }
-        
-        if ($request->has('to_date') && !empty($request->to_date)) {
-            $query->whereDate('created_at', '<=', $request->to_date);
-        }
-        
-        $sosAlerts = $query->orderByRaw("CASE 
-                WHEN status = 'active' THEN 1 
-                WHEN status = 'responded' THEN 2 
-                WHEN status = 'resolved' THEN 3 
-                ELSE 4 
-            END")
-            ->orderBy('created_at', 'desc')
-            ->paginate(10)
-            ->withQueryString();
-        
-        // Get all drivers for the filter dropdown
+        $sosAlerts = $query->orderBy('created_at', 'desc')->paginate(10);
         $drivers = Driver::with('user')->get();
         
         return Inertia::render('SOS/Index', [
             'sosAlerts' => $sosAlerts,
             'drivers' => $drivers,
-            'filters' => $request->only(['search', 'status', 'driver_id', 'from_date', 'to_date']),
+            'filters' => $request->only(['search', 'status', 'driver_id', 'from_date', 'to_date'])
         ]);
     }
 

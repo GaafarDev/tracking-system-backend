@@ -151,46 +151,36 @@ const stats = {
                 </div>
 
                 <!-- Filters -->
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <div class="flex-1">
-                            <div class="relative">
-                                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                </svg>
-                                <input
-                                    v-model="search"
-                                    type="text"
-                                    placeholder="Search routes..."
-                                    class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                                />
-                            </div>
+                <div class="px-6 py-4 bg-gradient-to-r from-primary-50 to-secondary-50 border-b border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <input 
+                                v-model="search"
+                                type="text" 
+                                placeholder="Search routes..." 
+                                class="input-modern"
+                            />
                         </div>
-                        <div class="w-full sm:w-48">
-                            <select 
-                                v-model="filterDistance"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                        <div>
+                            <select v-model="filterDistance" class="input-modern">
                                 <option value="all">All Distances</option>
-                                <option value="short">Short (< 10km)</option>
-                                <option value="medium">Medium (10-50km)</option>
-                                <option value="long">Long (> 50km)</option>
+                                <option value="short">Short (< 10 km)</option>
+                                <option value="medium">Medium (10-50 km)</option>
+                                <option value="long">Long (> 50 km)</option>
                             </select>
                         </div>
-                        <div class="w-full sm:w-48">
-                            <select 
-                                v-model="filterStops"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
-                                <option value="all">All Stop Counts</option>
-                                <option value="few">Few (1-3 stops)</option>
-                                <option value="medium">Medium (4-7 stops)</option>
-                                <option value="many">Many (8+ stops)</option>
+                        <div>
+                            <select v-model="filterStatus" class="input-modern">
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
                             </select>
                         </div>
-                        <button 
-                            @click="clearFilters"
-                            class="btn-secondary">
-                            Clear Filters
-                        </button>
+                        <div>
+                            <button @click="clearFilters" class="btn-secondary-modern w-full">
+                                Clear Filters
+                            </button>
+                        </div>
                     </div>
                 </div>
 

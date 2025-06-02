@@ -218,3 +218,46 @@ Route::prefix('debug')->group(function () {
         }
     });
 });
+
+// API routes for authenticated users
+Route::middleware(['auth:sanctum', config('jetstream.auth_session')])->prefix('api')->group(function () {
+    Route::get('/locations/latest', function() {
+        try {
+            $latestLocations = \App\Models\Location::with(['driver.user', 'vehicle'])
+                ->whereIn('id', function ($query) {
+                    $query->selectRaw('MAX(id)')
+                        ->from('locations')
+                        ->groupBy('driver_id');
+                })
+                ->where('recorded_at', '>=', now()->subMinutes(30))
+                ->orderBy('recorded_at', 'desc')
+                ->get();
+                
+            return response()->json($latestLocations);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to get latest locations',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    });
+    
+    Route::get('/dashboard/stats', function() {
+        try {
+            $stats = [
+                'activeDriversCount' => \App\Models\Location::where('recorded_at', '>=', now()->subMinutes(30))
+                    ->distinct('driver_id')->count(),
+                'activeVehiclesCount' => \App\Models\Vehicle::where('status', 'active')->count(),
+                'openIncidentsCount' => \App\Models\Incident::whereIn('status', ['reported', 'in_progress'])->count(),
+                'activeSosAlertsCount' => \App\Models\SosAlert::where('status', 'active')->count(),
+            ];
+            
+            return response()->json($stats);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to get dashboard stats',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    });
+});

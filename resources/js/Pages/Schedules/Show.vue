@@ -184,6 +184,46 @@
                     </div>
                 </div>
 
+                <!-- Route Map -->
+                <div class="card-modern p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Route Map</h3>
+                    <div id="route-detail-map" class="w-full h-96 rounded-xl border border-gray-200"></div>
+                </div>
+
+                <!-- Assigned Schedules -->
+                <div v-if="routeData.schedules && routeData.schedules.length > 0" class="mt-6">
+                    <div class="card-modern p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Schedule Information</h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Duration</th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr class="hover:bg-primary-50 transition-colors duration-150">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ schedule.departure_time }} - {{ schedule.arrival_time }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ formatDuration(schedule.departure_time, schedule.arrival_time) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span :class="getStatusBadgeClass(schedule.is_active)" class="px-3 py-1 text-xs font-semibold rounded-xl">
+                                                {{ schedule.is_active ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Action Buttons -->
                 <div class="mt-6 flex space-x-4">
                     <Link :href="route('schedules.index')" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
