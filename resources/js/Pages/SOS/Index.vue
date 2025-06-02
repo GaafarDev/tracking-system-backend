@@ -2,12 +2,13 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
+import DashboardCard from '@/Components/DashboardCard.vue';
+import { ExclamationTriangleIcon, ShieldExclamationIcon, CheckCircleIcon, ClockIcon } from '@heroicons/vue/24/outline';
 import axios from 'axios';
 
 const props = defineProps({
     sosAlerts: Object,
-    drivers: Array, // Add drivers prop
+    drivers: Array,
     filters: Object,
 });
 
@@ -55,19 +56,17 @@ function hasActiveSosAlerts() {
 }
 
 function initMap() {
-    // Using Leaflet for maps
     if (!window.L) {
         console.error('Leaflet library not loaded');
         return;
     }
     
-    map.value = L.map('sos-map').setView([4.2105, 101.9758], 10); // Center on Malaysia
+    map.value = L.map('sos-map').setView([4.2105, 101.9758], 10);
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map.value);
     
-    // Add markers for active SOS alerts
     props.sosAlerts.data.forEach(alert => {
         if (alert.status === 'active') {
             addSosMarker(alert);
@@ -81,14 +80,12 @@ function addSosMarker(alert) {
     const driverName = alert.driver?.user?.name || 'Unknown Driver';
     const timeInfo = new Date(alert.created_at).toLocaleTimeString();
     
-    // Create custom icon for SOS alerts
     const sosIcon = L.divIcon({
         html: `<div class="sos-marker-icon">SOS</div>`,
         className: '',
         iconSize: [40, 40]
     });
     
-    // Create marker popup content
     const popupContent = `
         <div class="font-bold text-red-600">SOS ALERT</div>
         <div class="font-medium">${driverName}</div>
@@ -115,8 +112,6 @@ function addSosMarker(alert) {
         .bindPopup(popupContent);
         
     markers.value[alertKey] = marker;
-    
-    // Auto-open the popup for active SOS alerts
     marker.openPopup();
 }
 
@@ -146,7 +141,6 @@ if (typeof window !== 'undefined') {
     window.resolveSos = resolveSos;
 }
 
-// Update applyFilters function
 function applyFilters() {
     const filters = {};
     
@@ -184,82 +178,129 @@ function formatDate(dateString) {
 function getStatusColor(status) {
     switch (status) {
         case 'active':
-            return 'bg-red-100 text-red-800';
+            return 'bg-red-100 text-red-800 border border-red-200 animate-pulse';
         case 'responded':
-            return 'bg-yellow-100 text-yellow-800';
+            return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
         case 'resolved':
-            return 'bg-green-100 text-green-800';
+            return 'bg-green-100 text-green-800 border border-green-200';
         default:
-            return 'bg-gray-100 text-gray-800';
+            return 'bg-gray-100 text-gray-800 border border-gray-200';
     }
 }
+
+// Calculate stats
+const stats = {
+    total: props.sosAlerts.total || 0,
+    active: props.sosAlerts.data.filter(s => s.status === 'active').length,
+    responded: props.sosAlerts.data.filter(s => s.status === 'responded').length,
+    resolved: props.sosAlerts.data.filter(s => s.status === 'resolved').length,
+};
 </script>
 
 <template>
     <AppLayout title="SOS Alerts">
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    SOS Alerts
-                </h2>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Active SOS Alert Banner -->
+            <div v-if="hasActiveSosAlerts()" 
+                 class="bg-gradient-to-r from-red-600 to-red-700 rounded-xl shadow-lg p-6 mb-8 animate-pulse">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="h-12 w-12 bg-white/20 rounded-full flex items-center justify-center">
+                            <ExclamationTriangleIcon class="h-8 w-8 text-white" />
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h3 class="text-xl font-bold text-white flex items-center">
+                            🚨 URGENT: Active SOS Alerts
+                            <span class="ml-3 px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
+                                {{ stats.active }}
+                            </span>
+                        </h3>
+                        <p class="mt-2 text-red-100">
+                            There are active SOS alerts that require immediate attention from drivers in the field.
+                        </p>
+                    </div>
+                    <div class="ml-4">
+                        <Link :href="route('sos.index')" class="bg-white text-red-600 px-6 py-3 rounded-xl font-semibold hover:bg-red-50 transition-colors duration-200">
+                            View All Alerts
+                        </Link>
+                    </div>
+                </div>
             </div>
-        </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- Active SOS Alert Banner -->
-                <div v-if="hasActiveSosAlerts()" 
-                     class="bg-gradient-to-r from-red-600 to-red-700 shadow-2xl rounded-2xl p-6 mb-8"
-                     v-motion
-                     :initial="{ opacity: 0, scale: 0.95 }"
-                     :enter="{ opacity: 1, scale: 1 }">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="h-12 w-12 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
-                                <ExclamationTriangleIcon class="h-8 w-8 text-white" />
-                            </div>
-                        </div>
-                        <div class="ml-4 flex-1">
-                            <h3 class="text-xl font-bold text-white flex items-center">
-                                🚨 URGENT: Active SOS Alerts
-                                <span class="ml-3 px-3 py-1 bg-white/20 rounded-full text-sm font-medium animate-pulse">
-                                    {{ props.sosAlerts.data.filter(a => a.status === 'active').length }}
-                                </span>
-                            </h3>
-                            <p class="mt-2 text-red-100">
-                                There are active SOS alerts that require immediate attention from drivers in the field.
-                            </p>
-                        </div>
-                        <div class="ml-4">
-                            <Link :href="route('sos.index')" class="bg-white text-red-600 px-6 py-3 rounded-xl font-semibold hover:bg-red-50 transition-colors duration-200">
-                                View All Alerts
-                            </Link>
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <DashboardCard
+                    title="Total Alerts"
+                    :value="stats.total"
+                    :icon="ShieldExclamationIcon"
+                    icon-color="text-gray-600"
+                    icon-bg-color="bg-gray-100"
+                />
+                <DashboardCard
+                    title="Active"
+                    :value="stats.active"
+                    :icon="ExclamationTriangleIcon"
+                    :icon-color="stats.active > 0 ? 'text-red-600' : 'text-gray-600'"
+                    :icon-bg-color="stats.active > 0 ? 'bg-red-100' : 'bg-gray-100'"
+                />
+                <DashboardCard
+                    title="Responded"
+                    :value="stats.responded"
+                    :icon="ClockIcon"
+                    icon-color="text-yellow-600"
+                    icon-bg-color="bg-yellow-100"
+                />
+                <DashboardCard
+                    title="Resolved"
+                    :value="stats.resolved"
+                    :icon="CheckCircleIcon"
+                    icon-color="text-green-600"
+                    icon-bg-color="bg-green-100"
+                />
+            </div>
+
+            <!-- Map View for Active SOS Alerts -->
+            <div v-if="hasActiveSosAlerts()" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Active SOS Alert Locations</h3>
+                    <p class="text-sm text-gray-600 mt-1">Real-time locations of emergency alerts</p>
+                </div>
+                <div id="sos-map" class="h-96"></div>
+            </div>
+
+            <!-- Main Content Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">SOS Alert Management</h3>
+                            <p class="text-sm text-gray-600 mt-1">Monitor and respond to emergency alerts</p>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Map View for Active SOS Alerts -->
-                <div v-if="hasActiveSosAlerts()" class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 mb-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Active SOS Alert Locations</h3>
-                    <div id="sos-map" class="w-full h-[400px] rounded-lg"></div>
-                </div>
-                
-                <!-- Search and Filters -->
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 mb-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+
+                <!-- Filters -->
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                         <div>
-                            <input 
-                                v-model="search" 
-                                type="text" 
-                                placeholder="Search SOS alerts..." 
-                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
+                            <div class="relative">
+                                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                <input
+                                    v-model="search"
+                                    type="text"
+                                    placeholder="Search SOS alerts..."
+                                    class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                                />
+                            </div>
                         </div>
                         <div>
                             <select 
                                 v-model="filterStatus"
-                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
                                 <option value="all">All Statuses</option>
                                 <option value="active">Active</option>
                                 <option value="responded">Responded</option>
@@ -269,8 +310,7 @@ function getStatusColor(status) {
                         <div>
                             <select 
                                 v-model="filterDriver"
-                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
                                 <option value="all">All Drivers</option>
                                 <option v-for="driver in props.drivers" :key="driver.id" :value="driver.id">
                                     {{ driver.user.name }}
@@ -281,7 +321,7 @@ function getStatusColor(status) {
                             <input 
                                 v-model="dateRange.from" 
                                 type="date" 
-                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                                 placeholder="From date"
                             />
                         </div>
@@ -289,103 +329,103 @@ function getStatusColor(status) {
                             <input 
                                 v-model="dateRange.to" 
                                 type="date" 
-                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                                 placeholder="To date"
                             />
                         </div>
                         <div>
                             <button 
                                 @click="clearFilters"
-                                class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
-                            >
+                                class="w-full btn-secondary">
                                 Clear Filters
                             </button>
                         </div>
                     </div>
                 </div>
-                
-                <!-- SOS Alerts Table -->
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">All SOS Alerts</h3>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="alert in props.sosAlerts.data" :key="alert.id" :class="{ 'bg-red-50': alert.status === 'active' }">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center text-xl">
-                                                🚨
-                                            </div>
-                                            <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900">
-                                                    {{ alert.driver?.user?.name || 'Unknown' }}
-                                                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr v-for="alert in props.sosAlerts.data" :key="alert.id" :class="{ 'bg-red-50': alert.status === 'active' }" class="hover:bg-gray-50 transition-colors duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-12 w-12 bg-red-100 rounded-full flex items-center justify-center text-xl">
+                                            🚨
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-semibold text-gray-900">
+                                                {{ alert.driver?.user?.name || 'Unknown' }}
                                             </div>
                                         </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ formatDate(alert.created_at) }}</div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm text-gray-900">{{ alert.message || 'No message provided' }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span :class="['px-2 inline-flex text-xs leading-5 font-semibold rounded-full', getStatusColor(alert.status)]">
-                                            {{ alert.status.charAt(0).toUpperCase() + alert.status.slice(1) }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button v-if="alert.status === 'active'" @click="respondToSos(alert.id)" class="text-blue-600 hover:text-blue-900 mr-3">
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ formatDate(alert.created_at) }}</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900">{{ alert.message || 'No message provided' }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span :class="getStatusColor(alert.status)" class="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-semibold">
+                                        {{ alert.status.charAt(0).toUpperCase() + alert.status.slice(1) }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex justify-end space-x-2">
+                                        <button v-if="alert.status === 'active'" @click="respondToSos(alert.id)" class="text-blue-600 hover:text-blue-900 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors duration-150">
                                             Respond
                                         </button>
-                                        <button v-if="alert.status !== 'resolved'" @click="resolveSos(alert.id)" class="text-green-600 hover:text-green-900">
+                                        <button v-if="alert.status !== 'resolved'" @click="resolveSos(alert.id)" class="text-green-600 hover:text-green-900 px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors duration-150">
                                             Resolve
                                         </button>
-                                        <Link v-if="alert.status === 'resolved'" :href="route('sos.show', alert.id)" class="text-blue-600 hover:text-blue-900">
+                                        <Link v-if="alert.status === 'resolved'" :href="route('sos.show', alert.id)" class="text-blue-600 hover:text-blue-900 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors duration-150">
                                             View Details
                                         </Link>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Empty state -->
-                                <tr v-if="props.sosAlerts.data.length === 0">
-                                    <td colspan="5" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">
-                                        No SOS alerts found.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Pagination -->
-                    <div class="mt-6 flex items-center justify-between">
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Empty state -->
+                            <tr v-if="props.sosAlerts.data.length === 0">
+                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                    <div class="flex flex-col items-center">
+                                        <ShieldExclamationIcon class="h-12 w-12 text-gray-300 mb-4" />
+                                        <h3 class="text-lg font-medium text-gray-900 mb-2">No SOS alerts found</h3>
+                                        <p class="text-gray-500">No emergency alerts match your current filters.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div v-if="props.sosAlerts.data.length > 0" class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                    <div class="flex items-center justify-between">
                         <div class="text-sm text-gray-700">
                             Showing {{ props.sosAlerts.from || 0 }} to {{ props.sosAlerts.to || 0 }} of {{ props.sosAlerts.total || 0 }} alerts
                         </div>
-                        
-                        <div class="flex-1 flex justify-end">
+                        <div class="flex space-x-2">
                             <Link 
                                 v-if="props.sosAlerts.prev_page_url" 
                                 :href="props.sosAlerts.prev_page_url" 
-                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                            >
+                                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-150">
                                 Previous
                             </Link>
                             <Link 
                                 v-if="props.sosAlerts.next_page_url" 
                                 :href="props.sosAlerts.next_page_url" 
-                                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                            >
+                                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-150">
                                 Next
                             </Link>
                         </div>

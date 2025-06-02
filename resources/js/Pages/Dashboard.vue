@@ -2,18 +2,18 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import DashboardCard from '@/Components/DashboardCard.vue';
 import ModernTable from '@/Components/ModernTable.vue';
-import StatCard from '@/Components/StatCard.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { useToast } from '@/Composables/useToast.js';
 import axios from 'axios';
 import { 
-    ArrowUpIcon, 
     UserGroupIcon, 
     TruckIcon, 
     ExclamationTriangleIcon, 
-    ShieldExclamationIcon, 
-    ShieldCheckIcon 
+    ShieldExclamationIcon,
+    MapIcon,
+    ClockIcon
 } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
@@ -27,7 +27,6 @@ const locations = ref(props.activeDrivers || []);
 const map = ref(null);
 const markers = ref({});
 const refreshInterval = ref(null);
-const vendorFilter = ref('');
 
 // Initialize with prop values and provide defaults
 const activeDriversCount = ref(props.activeDriversCount || 0);
@@ -38,23 +37,17 @@ const activeSosAlertsCount = ref(props.activeSosAlertsCount || 0);
 const { success, error, warning, sosAlert } = useToast();
 
 onMounted(async () => {
-    // Wait for the DOM to be ready
     await nextTick();
-    
-    // Initialize the map after a short delay to ensure Leaflet is loaded
     setTimeout(() => {
         initMap();
     }, 100);
     
-    // Get initial stats
     await refreshDashboardData();
     
-    // Show SOS alerts as toast notifications
     if (activeSosAlertsCount.value > 0) {
         sosAlert(`${activeSosAlertsCount.value} active SOS alert(s) require immediate attention!`);
     }
     
-    // Auto-refresh every 30 seconds
     refreshInterval.value = setInterval(refreshDashboardData, 30000);
 });
 
@@ -66,11 +59,7 @@ onUnmounted(() => {
 
 async function refreshDashboardData() {
     try {
-        const params = vendorFilter.value ? { vendor_id: vendorFilter.value } : {};
-        
-        // Get locations with vendor filter
         const locationsResponse = await axios.get('/api/locations/latest', {
-            params,
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
@@ -81,16 +70,13 @@ async function refreshDashboardData() {
         
         locations.value = locationsResponse.data;
         
-        // Update markers on map
         if (map.value && locations.value.length > 0) {
             locations.value.forEach(location => {
                 addOrUpdateMarker(location);
             });
         }
         
-        // Get updated stats
         const statsResponse = await axios.get('/api/dashboard/stats', {
-            params,
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
@@ -100,16 +86,13 @@ async function refreshDashboardData() {
         });
         
         if (statsResponse.data) {
-            // Check for new SOS alerts
             const previousSosCount = activeSosAlertsCount.value;
             
-            // Update reactive references
             activeDriversCount.value = statsResponse.data.activeDriversCount || 0;
             activeVehiclesCount.value = statsResponse.data.activeVehiclesCount || 0;
             openIncidentsCount.value = statsResponse.data.openIncidentsCount || 0;
             activeSosAlertsCount.value = statsResponse.data.activeSosAlertsCount || 0;
             
-            // Show SOS alert notification if count increased
             if (activeSosAlertsCount.value > previousSosCount) {
                 sosAlert(`${activeSosAlertsCount.value} active SOS alert(s) require immediate attention!`);
             }
@@ -120,35 +103,30 @@ async function refreshDashboardData() {
 }
 
 function initMap() {
-    // Check if Leaflet is available
     if (!window.L) {
         setTimeout(initMap, 500);
         return;
     }
     
     try {
-        // Initialize map with better settings
         map.value = L.map('map', {
-            center: [3.1319, 101.6841], // Kuala Lumpur coordinates
+            center: [3.1319, 101.6841],
             zoom: 12,
             zoomControl: true,
             attributionControl: true
         });
         
-        // Add tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19,
             minZoom: 5
         }).addTo(map.value);
         
-        // Add initial markers for existing locations
         if (locations.value && locations.value.length > 0) {
             locations.value.forEach(location => {
                 addOrUpdateMarker(location);
             });
             
-            // Fit map to show all markers
             if (Object.keys(markers.value).length > 0) {
                 const group = new L.featureGroup(Object.values(markers.value));
                 map.value.fitBounds(group.getBounds().pad(0.1));
@@ -170,7 +148,6 @@ function addOrUpdateMarker(location) {
     const vehicleInfo = location.vehicle?.plate_number || 'Unknown Vehicle';
     const timeInfo = new Date(location.recorded_at).toLocaleTimeString();
     
-    // Create custom icon for better visibility
     const driverIcon = L.divIcon({
         html: `
             <div style="
@@ -196,7 +173,6 @@ function addOrUpdateMarker(location) {
         popupAnchor: [0, -12]
     });
     
-    // Create enhanced popup content
     const popupContent = `
         <div style="min-width: 200px;">
             <div style="font-weight: bold; font-size: 14px; margin-bottom: 5px; color: #1f2937;">
@@ -218,11 +194,9 @@ function addOrUpdateMarker(location) {
     `;
     
     if (markers.value[driverKey]) {
-        // Update existing marker position and popup
         markers.value[driverKey].setLatLng(position);
         markers.value[driverKey].getPopup().setContent(popupContent);
     } else {
-        // Create new marker
         try {
             const marker = L.marker(position, { icon: driverIcon })
                 .addTo(map.value)
@@ -242,194 +216,181 @@ function addOrUpdateMarker(location) {
     </Head>
 
     <AppLayout title="Dashboard">
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Live Tracking Dashboard
-            </h2>
-        </template>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Dashboard Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <DashboardCard
+                    title="Active Drivers"
+                    :value="activeDriversCount"
+                    :icon="UserGroupIcon"
+                    icon-color="text-blue-600"
+                    icon-bg-color="bg-blue-100"
+                    :trend="{ direction: 'up', value: 12 }"
+                    description="Currently on duty"
+                />
+                
+                <DashboardCard
+                    title="Active Vehicles"
+                    :value="activeVehiclesCount"
+                    :icon="TruckIcon"
+                    icon-color="text-emerald-600"
+                    icon-bg-color="bg-emerald-100"
+                    :trend="{ direction: 'up', value: 8 }"
+                    description="In operation"
+                />
+                
+                <DashboardCard
+                    title="Open Incidents"
+                    :value="openIncidentsCount"
+                    :icon="ExclamationTriangleIcon"
+                    icon-color="text-orange-600"
+                    icon-bg-color="bg-orange-100"
+                    description="Require attention"
+                />
+                
+                <DashboardCard
+                    title="SOS Alerts"
+                    :value="activeSosAlertsCount"
+                    :icon="ShieldExclamationIcon"
+                    :icon-color="activeSosAlertsCount > 0 ? 'text-red-600' : 'text-gray-600'"
+                    :icon-bg-color="activeSosAlertsCount > 0 ? 'bg-red-100' : 'bg-gray-100'"
+                    description="Emergency alerts"
+                />
+            </div>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- Vendor Filter -->
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 mb-6">
-                    <div class="flex items-center space-x-4">
-                        <label for="vendor-filter" class="text-sm font-medium text-gray-700">Filter by Vendor:</label>
-                        <select 
-                            id="vendor-filter"
-                            v-model="vendorFilter" 
-                            @change="refreshDashboardData"
-                            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                            <option value="">All Vendors</option>
-                            <!-- Add vendor options here - you may need to fetch these from your API -->
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Enhanced Stats Overview with Modern Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <!-- Active Drivers Card -->
-                    <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-blue-600/30 rounded-full -translate-y-10 translate-x-10"></div>
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="p-3 bg-blue-500 rounded-xl shadow-lg">
-                                    <UserGroupIcon class="w-8 h-8 text-white" />
+            <!-- Live Map -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <MapIcon class="h-5 w-5 text-gray-400 mr-2" />
+                                    <h3 class="text-lg font-semibold text-gray-900">Live Vehicle Tracking</h3>
                                 </div>
-                                <div class="text-right">
-                                    <span class="text-xs text-blue-600 bg-blue-200 px-2 py-1 rounded-full font-medium">+12%</span>
-                                </div>
-                            </div>
-                            <h3 class="text-3xl font-bold text-gray-900 mb-1">{{ activeDriversCount }}</h3>
-                            <p class="text-sm text-gray-600 font-medium">Active Drivers</p>
-                            <div class="mt-3 h-1 bg-blue-200 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-1000" style="width: 75%"></div>
+                                <button 
+                                    @click="refreshDashboardData" 
+                                    class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                >
+                                    <ClockIcon class="h-4 w-4 mr-1.5" />
+                                    Refresh
+                                </button>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Active Vehicles Card -->
-                    <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-400/20 to-emerald-600/30 rounded-full -translate-y-10 translate-x-10"></div>
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="p-3 bg-emerald-500 rounded-xl shadow-lg">
-                                    <TruckIcon class="w-8 h-8 text-white" />
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-xs text-emerald-600 bg-emerald-200 px-2 py-1 rounded-full font-medium">+8%</span>
-                                </div>
-                            </div>
-                            <h3 class="text-3xl font-bold text-gray-900 mb-1">{{ activeVehiclesCount }}</h3>
-                            <p class="text-sm text-gray-600 font-medium">Active Vehicles</p>
-                            <div class="mt-3 h-1 bg-emerald-200 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full transition-all duration-1000" style="width: 82%"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Open Incidents Card -->
-                    <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-400/20 to-amber-600/30 rounded-full -translate-y-10 translate-x-10"></div>
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="p-3 bg-amber-500 rounded-xl shadow-lg">
-                                    <ExclamationTriangleIcon class="w-8 h-8 text-white" />
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-xs text-amber-600 bg-amber-200 px-2 py-1 rounded-full font-medium">{{ openIncidentsCount > 0 ? 'Alert' : 'Clear' }}</span>
-                                </div>
-                            </div>
-                            <h3 class="text-3xl font-bold text-gray-900 mb-1">{{ openIncidentsCount }}</h3>
-                            <p class="text-sm text-gray-600 font-medium">Open Incidents</p>
-                            <div class="mt-3 h-1 bg-amber-200 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-full transition-all duration-1000" :style="{ width: openIncidentsCount > 0 ? '65%' : '10%' }"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- SOS Alerts Card -->
-                    <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-50 to-red-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1" :class="{ 'animate-pulse': activeSosAlertsCount > 0 }">
-                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-400/20 to-red-600/30 rounded-full -translate-y-10 translate-x-10"></div>
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="p-3 bg-red-500 rounded-xl shadow-lg" :class="{ 'animate-pulse': activeSosAlertsCount > 0 }">
-                                    <ShieldExclamationIcon class="w-8 h-8 text-white" />
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-xs px-2 py-1 rounded-full font-medium" 
-                                          :class="activeSosAlertsCount > 0 ? 'text-red-600 bg-red-200 animate-pulse' : 'text-green-600 bg-green-200'">
-                                        {{ activeSosAlertsCount > 0 ? 'URGENT' : 'Clear' }}
-                                    </span>
-                                </div>
-                            </div>
-                            <h3 class="text-3xl font-bold text-gray-900 mb-1">{{ activeSosAlertsCount }}</h3>
-                            <p class="text-sm text-gray-600 font-medium">SOS Alerts</p>
-                            <div class="mt-3 h-1 bg-red-200 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full transition-all duration-1000" 
-                                     :style="{ width: activeSosAlertsCount > 0 ? '90%' : '5%' }"></div>
-                            </div>
-                        </div>
+                        <div id="map" class="h-96"></div>
                     </div>
                 </div>
                 
-                <!-- Refresh Button -->
-                <div class="flex justify-end mb-6">
-                    <button 
-                        @click="refreshDashboardData" 
-                        class="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm flex items-center"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Refresh
-                    </button>
-                </div>
-                
-                <!-- Map -->
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 mb-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Live Vehicle Tracking</h3>
-                    <div id="map" class="w-full h-[600px] rounded-lg border"></div>
-                </div>
-                
-                <!-- Recent Activities -->
-                <ModernTable
-                    title="Recent Activities"
-                    subtitle="Live tracking data from active drivers"
-                    :data="locations"
-                    :columns="[
-                        { key: 'driver.user.name', label: 'Driver' },
-                        { key: 'vehicle.plate_number', label: 'Vehicle' },
-                        { key: 'recorded_at', label: 'Last Seen' },
-                        { key: 'speed', label: 'Speed' },
-                        { key: 'status', label: 'Status' }
-                    ]"
-                    empty-title="No Active Drivers"
-                    empty-message="No drivers are currently sending location updates."
-                    class="mb-6">
+                <!-- Quick Stats -->
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                        <div class="space-y-3">
+                            <router-link :href="route('drivers.create')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Add New Driver
+                            </router-link>
+                            <router-link :href="route('vehicles.create')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Add New Vehicle
+                            </router-link>
+                            <router-link :href="route('routes.create')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Create Route
+                            </router-link>
+                        </div>
+                    </div>
                     
-                    <template #cell-driver.user.name="{ item }">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-                                <span class="text-white font-medium text-sm">
-                                    {{ (item.driver?.user?.name || 'U').charAt(0).toUpperCase() }}
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">GPS Tracking</span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Online
                                 </span>
                             </div>
-                            <div class="ml-3">
-                                <div class="text-sm font-medium text-gray-900">
-                                    {{ item.driver?.user?.name || 'Unknown Driver' }}
-                                </div>
-                                <div class="text-sm text-gray-500">
-                                    {{ item.driver?.user?.email || 'No email' }}
-                                </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">SMS Gateway</span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Active
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">API Status</span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Healthy
+                                </span>
                             </div>
                         </div>
-                    </template>
+                    </div>
+                </div>
+            </div>
 
-                    <template #cell-vehicle.plate_number="{ item }">
-                        <div>
-                            <div class="text-sm font-medium text-gray-900">{{ item.vehicle?.plate_number || 'Unknown' }}</div>
-                            <div class="text-sm text-gray-500">{{ item.vehicle?.model || 'Unknown Model' }}</div>
-                        </div>
-                    </template>
-
-                    <template #cell-recorded_at="{ item }">
-                        <div>
-                            <div class="text-sm text-gray-900">{{ new Date(item.recorded_at).toLocaleTimeString() }}</div>
-                            <div class="text-sm text-gray-500">{{ new Date(item.recorded_at).toLocaleDateString() }}</div>
-                        </div>
-                    </template>
-
-                    <template #cell-speed="{ item }">
-                        <div class="text-sm text-gray-900">
-                            {{ item.speed ? `${Math.round(item.speed)} km/h` : 'N/A' }}
-                        </div>
-                    </template>
-
-                    <template #cell-status="{ item }">
-                        <StatusBadge status="active" />
-                    </template>
-                </ModernTable>
+            <!-- Recent Activities Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Recent Activities</h3>
+                    <p class="text-sm text-gray-600">Live tracking data from active drivers</p>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Seen</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Speed</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr v-for="location in locations.slice(0, 10)" :key="location.id" class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                                            <span class="text-white font-medium text-sm">
+                                                {{ (location.driver?.user?.name || 'U').charAt(0).toUpperCase() }}
+                                            </span>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">
+                                                {{ location.driver?.user?.name || 'Unknown Driver' }}
+                                            </div>
+                                            <div class="text-sm text-gray-500">
+                                                {{ location.driver?.user?.email || 'No email' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ location.vehicle?.plate_number || 'Unknown' }}</div>
+                                    <div class="text-sm text-gray-500">{{ location.vehicle?.model || 'Unknown Model' }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ new Date(location.recorded_at).toLocaleTimeString() }}</div>
+                                    <div class="text-sm text-gray-500">{{ new Date(location.recorded_at).toLocaleDateString() }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">
+                                        {{ location.speed ? `${Math.round(location.speed)} km/h` : 'N/A' }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <StatusBadge status="active" />
+                                </td>
+                            </tr>
+                            
+                            <tr v-if="locations.length === 0">
+                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                    <div class="flex flex-col items-center">
+                                        <TruckIcon class="h-12 w-12 text-gray-300 mb-4" />
+                                        <h3 class="text-lg font-medium text-gray-900 mb-2">No Active Drivers</h3>
+                                        <p class="text-gray-500">No drivers are currently sending location updates.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </AppLayout>

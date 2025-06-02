@@ -2,6 +2,8 @@
 import { ref, watch, onMounted } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import DashboardCard from '@/Components/DashboardCard.vue';
+import { PlusIcon, MapIcon, ClockIcon, MapPinIcon } from '@heroicons/vue/24/outline';
 
 const page = usePage();
 const props = defineProps({
@@ -82,148 +84,203 @@ function clearFilters() {
         only: ['routes']
     });
 }
+
+// Calculate stats
+const stats = {
+    total: props.routes.total || 0,
+    short: props.routes.data.filter(r => r.distance_km && r.distance_km < 10).length,
+    medium: props.routes.data.filter(r => r.distance_km && r.distance_km >= 10 && r.distance_km <= 50).length,
+    long: props.routes.data.filter(r => r.distance_km && r.distance_km > 50).length,
+};
 </script>
 
 <template>
     <AppLayout title="Routes">
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Routes
-                </h2>
-                <Link :href="route('routes.create')" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:outline-none focus:border-blue-700 focus:ring focus:ring-blue-200 active:bg-blue-600 transition">
-                    Add Route
-                </Link>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <DashboardCard
+                    title="Total Routes"
+                    :value="stats.total"
+                    :icon="MapIcon"
+                    icon-color="text-blue-600"
+                    icon-bg-color="bg-blue-100"
+                />
+                <DashboardCard
+                    title="Short Routes"
+                    :value="stats.short"
+                    :icon="MapPinIcon"
+                    icon-color="text-green-600"
+                    icon-bg-color="bg-green-100"
+                    description="< 10km"
+                />
+                <DashboardCard
+                    title="Medium Routes"
+                    :value="stats.medium"
+                    :icon="MapPinIcon"
+                    icon-color="text-yellow-600"
+                    icon-bg-color="bg-yellow-100"
+                    description="10-50km"
+                />
+                <DashboardCard
+                    title="Long Routes"
+                    :value="stats.long"
+                    :icon="MapPinIcon"
+                    icon-color="text-red-600"
+                    icon-bg-color="bg-red-100"
+                    description="> 50km"
+                />
             </div>
-        </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                    <!-- Search and Filters -->
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <!-- Main Content Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <input 
-                                v-model="search" 
-                                type="text" 
-                                placeholder="Search routes..." 
-                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
+                            <h3 class="text-lg font-semibold text-gray-900">Route Management</h3>
+                            <p class="text-sm text-gray-600 mt-1">Manage and configure transportation routes</p>
                         </div>
-                        <div>
+                        <div class="mt-4 sm:mt-0">
+                            <Link :href="route('routes.create')" class="btn-primary">
+                                <PlusIcon class="w-4 h-4 mr-2" />
+                                Add Route
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1">
+                            <div class="relative">
+                                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                <input
+                                    v-model="search"
+                                    type="text"
+                                    placeholder="Search routes..."
+                                    class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                                />
+                            </div>
+                        </div>
+                        <div class="w-full sm:w-48">
                             <select 
                                 v-model="filterDistance"
-                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
                                 <option value="all">All Distances</option>
                                 <option value="short">Short (< 10km)</option>
                                 <option value="medium">Medium (10-50km)</option>
                                 <option value="long">Long (> 50km)</option>
                             </select>
                         </div>
-                        <div>
+                        <div class="w-full sm:w-48">
                             <select 
                                 v-model="filterStops"
-                                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
                                 <option value="all">All Stop Counts</option>
                                 <option value="few">Few (1-3 stops)</option>
                                 <option value="medium">Medium (4-7 stops)</option>
                                 <option value="many">Many (8+ stops)</option>
                             </select>
                         </div>
-                        <div>
-                            <button 
-                                @click="clearFilters"
-                                class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
-                            >
-                                Clear Filters
-                            </button>
-                        </div>
+                        <button 
+                            @click="clearFilters"
+                            class="btn-secondary">
+                            Clear Filters
+                        </button>
                     </div>
-                    
-                    <!-- Routes Table -->
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Distance</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stops</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="routeItem in props.routes.data" :key="routeItem.id">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                                <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                                                </svg>
-                                            </div>
-                                            <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900">
-                                                    {{ routeItem.name }}
-                                                </div>
-                                                <div class="text-sm text-gray-500">
-                                                    {{ routeItem.description || 'No description' }}
-                                                </div>
-                                            </div>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Distance</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stops</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr v-for="routeItem in props.routes.data" :key="routeItem.id" class="hover:bg-gray-50 transition-colors duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <MapIcon class="h-6 w-6 text-blue-600" />
                                         </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ formatDistance(routeItem.distance_km) }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ formatDuration(routeItem.estimated_duration_minutes) }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ getStopsCount(routeItem) }} stops</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <Link :href="route('routes.show', routeItem.id)" class="text-blue-600 hover:text-blue-900 mr-3">
+                                        <div class="ml-4">
+                                            <div class="text-sm font-semibold text-gray-900">{{ routeItem.name }}</div>
+                                            <div class="text-sm text-gray-500">{{ routeItem.description || 'No description' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900 font-medium">{{ formatDistance(routeItem.distance_km) }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center text-sm text-gray-900">
+                                        <ClockIcon class="h-4 w-4 text-gray-400 mr-1" />
+                                        {{ formatDuration(routeItem.estimated_duration_minutes) }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ getStopsCount(routeItem) }} stops</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex justify-end space-x-2">
+                                        <Link :href="route('routes.show', routeItem.id)" class="text-blue-600 hover:text-blue-900 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors duration-150">
                                             View
                                         </Link>
-                                        <Link :href="route('routes.edit', routeItem.id)" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                        <Link :href="route('routes.edit', routeItem.id)" class="text-indigo-600 hover:text-indigo-900 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors duration-150">
                                             Edit
                                         </Link>
-                                        <button @click="confirmDelete(routeItem)" class="text-red-600 hover:text-red-900">
+                                        <button @click="confirmDelete(routeItem)" class="text-red-600 hover:text-red-900 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors duration-150">
                                             Delete
                                         </button>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Empty state -->
-                                <tr v-if="props.routes.data.length === 0">
-                                    <td colspan="5" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">
-                                        No routes found.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Pagination -->
-                    <div class="mt-6 flex items-center justify-between">
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Empty state -->
+                            <tr v-if="props.routes.data.length === 0">
+                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                    <div class="flex flex-col items-center">
+                                        <MapIcon class="h-12 w-12 text-gray-300 mb-4" />
+                                        <h3 class="text-lg font-medium text-gray-900 mb-2">No routes found</h3>
+                                        <p class="text-gray-500">Get started by creating your first route.</p>
+                                        <Link :href="route('routes.create')" class="mt-4 btn-primary">
+                                            <PlusIcon class="w-4 h-4 mr-2" />
+                                            Create Your First Route
+                                        </Link>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div v-if="props.routes.data.length > 0" class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                    <div class="flex items-center justify-between">
                         <div class="text-sm text-gray-700">
                             Showing {{ props.routes.from || 0 }} to {{ props.routes.to || 0 }} of {{ props.routes.total || 0 }} routes
                         </div>
-                        
-                        <div class="flex-1 flex justify-end">
+                        <div class="flex space-x-2">
                             <Link 
                                 v-if="props.routes.prev_page_url" 
                                 :href="props.routes.prev_page_url" 
-                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                            >
+                                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-150">
                                 Previous
                             </Link>
                             <Link 
                                 v-if="props.routes.next_page_url" 
                                 :href="props.routes.next_page_url" 
-                                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                            >
+                                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-150">
                                 Next
                             </Link>
                         </div>
