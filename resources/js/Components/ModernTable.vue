@@ -1,18 +1,18 @@
 <template>
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <!-- Table Header -->
-    <div v-if="title || $slots.header" class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+  <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+    <!-- Enhanced Header -->
+    <div v-if="title || $slots.header" class="px-6 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-blue-50">
       <div class="flex items-center justify-between">
         <div>
-          <h3 v-if="title" class="text-lg font-semibold text-gray-900">{{ title }}</h3>
-          <p v-if="subtitle" class="text-sm text-gray-600 mt-1">{{ subtitle }}</p>
+          <h3 v-if="title" class="text-xl font-bold text-gray-900 mb-1">{{ title }}</h3>
+          <p v-if="subtitle" class="text-sm text-gray-600">{{ subtitle }}</p>
         </div>
         <slot name="header-actions" />
       </div>
     </div>
 
-    <!-- Search and Filters -->
-    <div v-if="searchable || $slots.filters" class="px-6 py-4 border-b border-gray-100">
+    <!-- Enhanced Search Section -->
+    <div v-if="searchable || $slots.filters" class="px-6 py-4 bg-gray-50/50 border-b border-gray-100">
       <div class="flex flex-col sm:flex-row gap-4">
         <!-- Search Input -->
         <div v-if="searchable" class="flex-1">
@@ -22,7 +22,7 @@
               v-model="searchQuery"
               type="text"
               :placeholder="searchPlaceholder"
-              class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm"
             />
           </div>
         </div>
@@ -32,17 +32,17 @@
       </div>
     </div>
 
-    <!-- Table Content -->
+    <!-- Enhanced Table -->
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
+      <table class="min-w-full">
         <!-- Table Headers -->
-        <thead class="bg-gray-50">
+        <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
           <tr>
             <th v-for="column in columns" :key="column.key" 
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
               {{ column.label }}
             </th>
-            <th v-if="hasActions" class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th v-if="hasActions" class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
               Actions
             </th>
           </tr>
@@ -51,7 +51,7 @@
         <!-- Table Body -->
         <tbody class="bg-white divide-y divide-gray-100">
           <tr v-for="(item, index) in filteredData" :key="item.id || index" 
-              class="hover:bg-gray-50 transition-colors duration-150">
+              class="hover:bg-blue-50/30 transition-colors duration-200">
             <td v-for="column in columns" :key="column.key" 
                 class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               <slot :name="`cell-${column.key}`" :item="item" :value="getColumnValue(item, column.key)">

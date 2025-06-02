@@ -268,48 +268,81 @@ function addOrUpdateMarker(location) {
 
                 <!-- Stats Overview -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <StatCard
-                        title="Active Drivers"
-                        :value="activeDriversCount"
-                        subtitle="+12% from yesterday"
-                        subtitle-type="success"
-                        :subtitle-icon="ArrowUpIcon"
-                        :icon="UserGroupIcon"
-                        icon-color="blue"
-                        :animation-delay="100"
-                    />
-                        
-                    <StatCard
-                        title="Active Vehicles"
-                        :value="activeVehiclesCount"
-                        subtitle="+8% from yesterday"
-                        subtitle-type="success"
-                        :subtitle-icon="ArrowUpIcon"
-                        :icon="TruckIcon"
-                        icon-color="green"
-                        :animation-delay="200"
-                    />
-                        
-                    <StatCard
-                        title="Open Incidents"
-                        :value="openIncidentsCount"
-                        subtitle="Needs attention"
-                        subtitle-type="warning"
-                        :subtitle-icon="ExclamationTriangleIcon"
-                        :icon="ExclamationTriangleIcon"
-                        icon-color="yellow"
-                        :animation-delay="300"
-                    />
-                        
-                    <StatCard
-                        title="SOS Alerts"
-                        :value="activeSosAlertsCount"
-                        :subtitle="activeSosAlertsCount > 0 ? 'URGENT' : 'All Clear'"
-                        :subtitle-type="activeSosAlertsCount > 0 ? 'danger' : 'success'"
-                        :icon="ShieldExclamationIcon"
-                        :icon-color="activeSosAlertsCount > 0 ? 'red' : 'gray'"
-                        :animation-delay="400"
-                    />
+                    <!-- Active Drivers Card -->
+                    <div class="modern-card p-6 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full -translate-y-10 translate-x-10 opacity-20"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="p-3 bg-blue-100 rounded-xl">
+                                    <UserGroupIcon class="w-6 h-6 text-blue-600" />
+                                </div>
+                                <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">+12%</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ activeDriversCount }}</h3>
+                            <p class="text-sm text-gray-600">Active Drivers</p>
+                            <div class="mt-3 progress-bar">
+                                <div class="progress-fill" :style="{ width: '75%' }"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Vehicles Card -->
+                    <div class="modern-card p-6 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full -translate-y-10 translate-x-10 opacity-20"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="p-3 bg-green-100 rounded-xl">
+                                    <TruckIcon class="w-6 h-6 text-green-600" />
+                                </div>
+                                <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">+8%</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ activeVehiclesCount }}</h3>
+                            <p class="text-sm text-gray-600">Active Vehicles</p>
+                            <div class="mt-3 progress-bar">
+                                <div class="progress-fill" :style="{ width: '82%' }"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Open Incidents Card -->
+                    <div class="modern-card p-6 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full -translate-y-10 translate-x-10 opacity-20"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="p-3 bg-yellow-100 rounded-xl">
+                                    <ExclamationTriangleIcon class="w-6 h-6 text-yellow-600" />
+                                </div>
+                                <span class="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">{{ openIncidentsCount > 0 ? 'Action Needed' : 'All Clear' }}</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ openIncidentsCount }}</h3>
+                            <p class="text-sm text-gray-600">Open Incidents</p>
+                            <div class="mt-3 progress-bar">
+                                <div class="progress-fill bg-gradient-to-r from-yellow-500 to-orange-600" :style="{ width: openIncidentsCount > 0 ? '65%' : '10%' }"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SOS Alerts Card -->
+                    <div class="modern-card p-6 relative overflow-hidden" :class="{ 'status-pulse': activeSosAlertsCount > 0 }">
+                        <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-400 to-red-600 rounded-full -translate-y-10 translate-x-10 opacity-20"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="p-3 bg-red-100 rounded-xl" :class="{ 'animate-pulse': activeSosAlertsCount > 0 }">
+                                    <ShieldExclamationIcon class="w-6 h-6 text-red-600" />
+                                </div>
+                                <span class="text-xs px-2 py-1 rounded-full animate-pulse" 
+                                      :class="activeSosAlertsCount > 0 ? 'text-red-600 bg-red-100' : 'text-green-600 bg-green-100'">
+                                    {{ activeSosAlertsCount > 0 ? 'URGENT' : 'All Clear' }}
+                                </span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ activeSosAlertsCount }}</h3>
+                            <p class="text-sm text-gray-600">SOS Alerts</p>
+                            <div class="mt-3 progress-bar">
+                                <div class="progress-fill bg-gradient-to-r from-red-500 to-red-600" 
+                                     :style="{ width: activeSosAlertsCount > 0 ? '90%' : '5%' }"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Refresh Button -->

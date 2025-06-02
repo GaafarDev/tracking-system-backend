@@ -34,58 +34,84 @@ const logout = () => {
         <Banner />
 
         <div class="min-h-screen bg-gray-100">
-            <nav class="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-50">
+            <nav class="bg-white/90 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-50 shadow-lg">
                 <!-- Primary Navigation Menu -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex justify-between h-16">
                         <div class="flex items-center">
-                            <!-- Logo with enhanced styling -->
+                            <!-- Enhanced Logo -->
                             <div class="shrink-0 flex items-center">
                                 <Link :href="route('dashboard')" class="flex items-center space-x-3 group">
                                     <div class="relative">
-                                        <ApplicationMark class="block h-10 w-auto text-red-600 group-hover:text-red-700 transition-colors duration-200" />
-                                        <div class="absolute -inset-1 bg-red-600/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                                        <ApplicationMark class="block h-10 w-auto text-red-600 group-hover:text-red-700 transition-all duration-300 transform group-hover:scale-110" />
+                                        <div class="absolute -inset-2 bg-gradient-to-r from-red-600 to-purple-600 rounded-lg blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
                                     </div>
-                                    <span class="hidden md:block text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                                        MaraLinear
-                                    </span>
+                                    <div class="hidden md:block">
+                                        <span class="text-xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
+                                            MaraLinear
+                                        </span>
+                                        <div class="text-xs text-gray-500 -mt-1">Transportation Hub</div>
+                                    </div>
                                 </Link>
                             </div>
 
                             <!-- Enhanced Navigation Links -->
-                            <div class="hidden space-x-1 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink :href="route('dashboard')" :active="route().current('dashboard')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                            <div class="hidden space-x-2 sm:-my-px sm:ms-10 sm:flex">
+                                <Link :href="route('dashboard')" 
+                                      :class="route().current('dashboard') ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'"
+                                      class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 border">
                                     <HomeIcon class="w-4 h-4 mr-2" />
                                     Dashboard
-                                </NavLink>
-                                <NavLink :href="route('drivers.index')" :active="route().current('drivers.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                </Link>
+                                
+                                <Link :href="route('drivers.index')" 
+                                      :class="route().current('drivers.*') ? 'bg-green-50 text-green-700 border-green-200' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'"
+                                      class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 border">
                                     <UserGroupIcon class="w-4 h-4 mr-2" />
                                     Drivers
-                                </NavLink>
-                                <NavLink :href="route('vehicles.index')" :active="route().current('vehicles.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                </Link>
+                                
+                                <Link :href="route('vehicles.index')" 
+                                      :class="route().current('vehicles.*') ? 'bg-purple-50 text-purple-700 border-purple-200' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'"
+                                      class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 border">
                                     <TruckIcon class="w-4 h-4 mr-2" />
                                     Vehicles
-                                </NavLink>
-                                <NavLink :href="route('routes.index')" :active="route().current('routes.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                </Link>
+                                
+                                <Link :href="route('routes.index')" 
+                                      :class="route().current('routes.*') ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'"
+                                      class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 border">
                                     <MapIcon class="w-4 h-4 mr-2" />
                                     Routes
-                                </NavLink>
-                                <NavLink :href="route('schedules.index')" :active="route().current('schedules.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                </Link>
+                                
+                                <Link :href="route('schedules.index')" 
+                                      :class="route().current('schedules.*') ? 'bg-amber-50 text-amber-700 border-amber-200' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'"
+                                      class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 border">
                                     <CalendarIcon class="w-4 h-4 mr-2" />
                                     Schedules
-                                </NavLink>
-                                <NavLink :href="route('incidents.index')" :active="route().current('incidents.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                </Link>
+                                
+                                <Link :href="route('incidents.index')" 
+                                      :class="route().current('incidents.*') ? 'bg-orange-50 text-orange-700 border-orange-200' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'"
+                                      class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 border">
                                     <ExclamationTriangleIcon class="w-4 h-4 mr-2" />
                                     Incidents
-                                </NavLink>
-                                <NavLink :href="route('sos.index')" :active="route().current('sos.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                </Link>
+                                
+                                <Link :href="route('sos.index')" 
+                                      :class="route().current('sos.*') ? 'bg-red-50 text-red-700 border-red-200' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'"
+                                      class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 border">
                                     <ShieldExclamationIcon class="w-4 h-4 mr-2" />
                                     SOS Alerts
-                                </NavLink>
-                                <NavLink :href="route('vendors.index')" :active="route().current('vendors.*')" class="nav-link-enhanced inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
+                                </Link>
+                                
+                                <Link :href="route('vendors.index')" 
+                                      :class="route().current('vendors.*') ? 'bg-teal-50 text-teal-700 border-teal-200' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'"
+                                      class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 border">
                                     <BuildingOfficeIcon class="w-4 h-4 mr-2" />
                                     Vendors
-                                </NavLink>
+                                </Link>
                             </div>
                         </div>
 

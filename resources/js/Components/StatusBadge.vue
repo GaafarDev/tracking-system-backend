@@ -1,6 +1,6 @@
 <template>
-  <span :class="badgeClasses" class="px-3 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full">
-    <div v-if="showDot" :class="dotClasses" class="w-2 h-2 rounded-full mr-2"></div>
+  <span :class="[badgeClasses, 'px-3 py-1.5 inline-flex items-center text-xs leading-5 font-semibold rounded-full transition-all duration-200 shadow-sm']">
+    <div v-if="showDot" :class="[dotClasses, 'w-2 h-2 rounded-full mr-2 animate-pulse']"></div>
     <component v-if="icon" :is="icon" class="w-3 h-3 mr-1" />
     {{ displayText }}
   </span>
