@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use App\Models\Driver;
 use App\Models\User;
+use App\Models\Vendor;
 use App\Notifications\DriverAccountCreated;
 
 class DriverController extends Controller
@@ -18,7 +19,7 @@ class DriverController extends Controller
 
     public function index(Request $request)
     {
-        $query = Driver::with('user');
+        $query = Driver::with(['user', 'vendor']);
         
         // Apply search filter if provided
         if ($request->has('search')) {
@@ -36,18 +37,28 @@ class DriverController extends Controller
             $query->where('status', $request->status);
         }
         
+        // Apply vendor filter if provided
+        if ($request->has('vendor_id') && $request->vendor_id !== 'all') {
+            $query->where('vendor_id', $request->vendor_id);
+        }
+        
         $drivers = $query->paginate(10)
             ->withQueryString();
         
+        // Get vendors for filter dropdown
+        $vendors = Vendor::select('id', 'name')->get();
+        
         return Inertia::render('Drivers/Index', [
             'drivers' => $drivers,
-            'filters' => $request->only(['search', 'status']),
+            'vendors' => $vendors,
+            'filters' => $request->only(['search', 'status', 'vendor_id']),
         ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'vendor_id' => 'required|exists:vendors,id',
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'license_number' => 'required|string|max:255',
@@ -67,8 +78,9 @@ class DriverController extends Controller
             'role' => 'driver', // Explicitly set as driver
         ]);
 
-        // Create driver record linked to user
+        // Create driver record linked to user AND vendor
         $driver = Driver::create([
+            'vendor_id' => $validated['vendor_id'],
             'user_id' => $user->id,
             'license_number' => $validated['license_number'],
             'phone_number' => $validated['phone_number'],
@@ -95,7 +107,11 @@ class DriverController extends Controller
 
     public function create()
     {
-        return Inertia::render('Drivers/Create');
+        $vendors = Vendor::where('status', 'active')->get();
+        
+        return Inertia::render('Drivers/Create', [
+            'vendors' => $vendors,
+        ]);
     }
 
     /**
@@ -105,6 +121,7 @@ class DriverController extends Controller
     {
         $driver->load([
             'user',
+            'vendor',
             'schedules' => function($query) {
                 $query->with(['route', 'vehicle'])->latest()->take(5);
             }
@@ -120,10 +137,12 @@ class DriverController extends Controller
      */
     public function edit(Driver $driver)
     {
-        $driver->load('user');
+        $driver->load(['user', 'vendor']);
+        $vendors = Vendor::where('status', 'active')->get();
         
         return Inertia::render('Drivers/Edit', [
-            'driver' => $driver
+            'driver' => $driver,
+            'vendors' => $vendors,
         ]);
     }
 
@@ -133,6 +152,7 @@ class DriverController extends Controller
     public function update(Request $request, Driver $driver)
     {
         $request->validate([
+            'vendor_id' => 'required|exists:vendors,id',
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $driver->user_id,
             'license_number' => 'required|string|max:255|unique:drivers,license_number,' . $driver->id,
@@ -147,8 +167,9 @@ class DriverController extends Controller
             'email' => $request->email,
         ]);
 
-        // Update driver information
+        // Update driver information INCLUDING vendor_id
         $driver->update([
+            'vendor_id' => $request->vendor_id,
             'license_number' => $request->license_number,
             'phone_number' => $request->phone_number,
             'address' => $request->address,
@@ -190,7 +211,7 @@ class DriverController extends Controller
                 ], 403);
             }
 
-            $driver = Driver::where('user_id', $user->id)->with('user')->first();
+            $driver = Driver::where('user_id', $user->id)->with(['user', 'vendor'])->first();
             
             if (!$driver) {
                 return response()->json([

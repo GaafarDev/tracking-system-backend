@@ -9,6 +9,7 @@ use App\Http\Controllers\API\RouteController;
 use App\Http\Controllers\API\ScheduleController;
 use App\Http\Controllers\API\IncidentController;
 use App\Http\Controllers\API\SosAlertController;
+use App\Http\Controllers\API\VendorController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -31,7 +32,10 @@ Route::middleware([
     // Dashboard - Admin only
     Route::get('/dashboard', [App\Http\Controllers\API\DashboardController::class, 'index'])->name('dashboard');
     
-    // Resource controllers - Admin only
+    // VENDOR ROUTES
+    Route::resource('vendors', VendorController::class);
+    
+    // Existing resource controllers - Admin only
     Route::resource('drivers', DriverController::class);
     Route::resource('vehicles', VehicleController::class);
     Route::resource('routes', RouteController::class);

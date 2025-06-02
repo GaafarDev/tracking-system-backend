@@ -1,4 +1,5 @@
 <?php
+// app/Models/Vehicle.php - Updated version
 
 namespace App\Models;
 
@@ -10,12 +11,18 @@ class Vehicle extends Model
     use HasFactory;
 
     protected $fillable = [
+        'vendor_id',  // Add this
         'plate_number',
         'model',
         'capacity',
         'type',
         'status',
     ];
+
+    public function vendor()  // Add this relationship
+    {
+        return $this->belongsTo(Vendor::class);
+    }
 
     public function drivers()
     {

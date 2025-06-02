@@ -1,4 +1,5 @@
 <?php
+// app/Models/Driver.php - Updated version
 
 namespace App\Models;
 
@@ -10,12 +11,18 @@ class Driver extends Model
     use HasFactory;
 
     protected $fillable = [
+        'vendor_id',  // Add this
         'user_id',
         'license_number',
         'phone_number',
         'address',
         'status',
     ];
+
+    public function vendor()  // Add this relationship
+    {
+        return $this->belongsTo(Vendor::class);
+    }
 
     public function user()
     {
