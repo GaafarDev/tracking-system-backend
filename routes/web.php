@@ -36,9 +36,12 @@ Route::middleware([
     })->name('dashboard');
     
     // Profile routes
-    Route::get('/user/profile', function () {
-        return Inertia::render('Profile/Show');
-    })->name('profile.show');
+Route::get('/user/profile', function (Request $request) {
+    return Inertia::render('Profile/Show', [
+        'confirmsTwoFactorAuthentication' => false, // You can make this dynamic based on your requirements
+        'sessions' => collect(), // Empty collection for now, or implement actual session tracking
+    ]);
+})->name('profile.show');
 });
 
 // Admin-only routes
