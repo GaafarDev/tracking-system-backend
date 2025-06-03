@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
-import { Head, router, Link } from '@inertiajs/vue3'; // Add Link here
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue';
+import { Head, router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DashboardCard from '@/Components/DashboardCard.vue';
 import ModernTable from '@/Components/ModernTable.vue';
@@ -13,14 +13,19 @@ import {
     ExclamationTriangleIcon, 
     ShieldExclamationIcon,
     MapIcon,
-    ClockIcon
+    ClockIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon
 } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
     activeDrivers: Array,
     openIncidentsCount: Number,
     activeSosAlertsCount: Number,
-    activeDriversCount: Number
+    activeDriversCount: Number,
+    activeVehiclesCount: Number,
+    schedules: Array,
+    dashboardStats: Object // New prop for dynamic stats
 });
 
 const locations = ref(props.activeDrivers || []);
@@ -28,13 +33,37 @@ const map = ref(null);
 const markers = ref({});
 const refreshInterval = ref(null);
 
-// Initialize with prop values and provide defaults
-const activeDriversCount = ref(props.activeDriversCount || 0);
-const activeVehiclesCount = ref(0);
-const openIncidentsCount = ref(props.openIncidentsCount || 0);
-const activeSosAlertsCount = ref(props.activeSosAlertsCount || 0);
+// Use dynamic stats from backend instead of hardcoded values
+const activeDriversCount = ref(props.dashboardStats?.activeDriversCount || props.activeDriversCount || 0);
+const activeVehiclesCount = ref(props.dashboardStats?.activeVehiclesCount || props.activeVehiclesCount || 0);
+const openIncidentsCount = ref(props.dashboardStats?.openIncidentsCount || props.openIncidentsCount || 0);
+const activeSosAlertsCount = ref(props.dashboardStats?.activeSosAlertsCount || props.activeSosAlertsCount || 0);
+
+// Dynamic percentage changes from backend
+const statsChanges = computed(() => props.dashboardStats?.changes || {
+    drivers: { value: 0, isPositive: true },
+    vehicles: { value: 0, isPositive: true },
+    incidents: { value: 0, isPositive: false },
+    sos: { value: 0, isPositive: true }
+});
 
 const { success, error, warning, sosAlert } = useToast();
+
+// Weekly schedule calendar
+const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const currentWeek = ref(0);
+
+// Get unique vehicles for schedule display
+const uniqueVehicles = computed(() => {
+    if (!props.schedules) return [];
+    const vehicles = new Map();
+    props.schedules.forEach(schedule => {
+        if (schedule.vehicle) {
+            vehicles.set(schedule.vehicle.id, schedule.vehicle);
+        }
+    });
+    return Array.from(vehicles.values());
+});
 
 onMounted(async () => {
     await nextTick();
@@ -208,6 +237,46 @@ function addOrUpdateMarker(location) {
         }
     }
 }
+
+// Schedule calendar functions
+function getSchedulesForVehicleAndDay(vehicleId, day) {
+    if (!props.schedules) return [];
+    return props.schedules.filter(schedule => 
+        schedule.vehicle?.id === vehicleId && 
+        schedule.day_of_week === day.toLowerCase() &&
+        schedule.is_active
+    );
+}
+
+function getScheduleColorClass(schedule) {
+    const colors = [
+        'bg-gradient-to-r from-primary-500 to-primary-600',
+        'bg-gradient-to-r from-blue-500 to-blue-600',
+        'bg-gradient-to-r from-green-500 to-green-600',
+        'bg-gradient-to-r from-purple-500 to-purple-600',
+        'bg-gradient-to-r from-secondary-500 to-secondary-600',
+    ];
+    return colors[schedule.id % colors.length];
+}
+
+function previousWeek() {
+    currentWeek.value = Math.max(0, currentWeek.value - 1);
+}
+
+function nextWeek() {
+    currentWeek.value = currentWeek.value + 1;
+}
+
+function formatStatChange(change) {
+    if (!change || change.value === 0) return '';
+    const sign = change.isPositive ? '+' : '';
+    return `${sign}${change.value}%`;
+}
+
+function getStatChangeClass(change) {
+    if (!change || change.value === 0) return 'text-gray-500';
+    return change.isPositive ? 'text-green-500' : 'text-red-500';
+}
 </script>
 
 <template>
@@ -217,98 +286,68 @@ function addOrUpdateMarker(location) {
 
     <AppLayout title="Dashboard">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Dashboard Overview Cards -->
+            <!-- Dashboard Overview Cards with Dynamic Data -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="card-modern p-6 hover-lift">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">Active Drivers</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-2">{{ activeDriversCount }}</p>
-                            <div class="flex items-center mt-2">
-                                <div class="flex items-center text-green-500 text-sm">
-                                    <div class="status-indicator-online mr-2"></div>
-                                    +12%
-                                </div>
-                                <span class="text-gray-500 text-sm ml-2">vs last week</span>
-                            </div>
-                        </div>
-                        <div class="p-3 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl">
-                            <UserGroupIcon class="w-8 h-8 text-white" />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-modern p-6 hover-lift">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">Active Vehicles</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-2">{{ activeVehiclesCount }}</p>
-                            <div class="flex items-center mt-2">
-                                <div class="flex items-center text-green-500 text-sm">
-                                    <div class="status-indicator-online mr-2"></div>
-                                    +8%
-                                </div>
-                                <span class="text-gray-500 text-sm ml-2">vs last week</span>
-                            </div>
-                        </div>
-                        <div class="p-3 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl">
-                            <TruckIcon class="w-8 h-8 text-white" />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-modern p-6 hover-lift">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">Open Incidents</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-2">{{ openIncidentsCount }}</p>
-                            <div class="flex items-center mt-2">
-                                <div class="flex items-center text-red-500 text-sm">
-                                    <div class="status-indicator-offline mr-2"></div>
-                                    -5%
-                                </div>
-                                <span class="text-gray-500 text-sm ml-2">vs last week</span>
-                            </div>
-                        </div>
-                        <div class="p-3 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl">
-                            <ExclamationTriangleIcon class="w-8 h-8 text-white" />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-modern p-6 hover-lift">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">SOS Alerts</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-2">{{ activeSosAlertsCount }}</p>
-                            <div class="flex items-center mt-2">
-                                <div :class="activeSosAlertsCount > 0 ? 'text-red-500' : 'text-green-500'" class="flex items-center text-sm">
-                                    <div :class="activeSosAlertsCount > 0 ? 'status-indicator-offline' : 'status-indicator-online'" class="mr-2"></div>
-                                    {{ activeSosAlertsCount > 0 ? 'Active' : 'Normal' }}
-                                </div>
-                                <span class="text-gray-500 text-sm ml-2">status</span>
-                            </div>
-                        </div>
-                        <div :class="activeSosAlertsCount > 0 ? 'bg-gradient-to-r from-red-500 to-red-600' : 'bg-gradient-to-r from-primary-500 to-primary-600'" class="p-3 rounded-xl">
-                            <ShieldExclamationIcon class="w-8 h-8 text-white" />
-                        </div>
-                    </div>
-                </div>
+                <DashboardCard
+                    title="Active Drivers"
+                    :value="activeDriversCount"
+                    :icon="UserGroupIcon"
+                    icon-color="blue"
+                    :animation-delay="0"
+                    :subtitle="`${formatStatChange(statsChanges.drivers)} vs last week`"
+                    :subtitle-type="statsChanges.drivers.isPositive ? 'success' : 'danger'"
+                />
+                
+                <DashboardCard
+                    title="Active Vehicles"
+                    :value="activeVehiclesCount"
+                    :icon="TruckIcon"
+                    icon-color="green"
+                    :animation-delay="100"
+                    :subtitle="`${formatStatChange(statsChanges.vehicles)} vs last week`"
+                    :subtitle-type="statsChanges.vehicles.isPositive ? 'success' : 'danger'"
+                />
+                
+                <DashboardCard
+                    title="Open Incidents"
+                    :value="openIncidentsCount"
+                    :icon="ExclamationTriangleIcon"
+                    icon-color="yellow"
+                    :animation-delay="200"
+                    :subtitle="`${formatStatChange(statsChanges.incidents)} vs last week`"
+                    :subtitle-type="statsChanges.incidents.isPositive ? 'danger' : 'success'"
+                />
+                
+                <DashboardCard
+                    title="SOS Alerts"
+                    :value="activeSosAlertsCount"
+                    :icon="ShieldExclamationIcon"
+                    :icon-color="activeSosAlertsCount > 0 ? 'red' : 'gray'"
+                    :animation-delay="300"
+                    :subtitle="activeSosAlertsCount > 0 ? 'Immediate attention required!' : 'All clear'"
+                    :subtitle-type="activeSosAlertsCount > 0 ? 'danger' : 'success'"
+                />
             </div>
 
-            <!-- Live Map -->
+            <!-- Main Content Grid - Improved Layout -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Expanded Live Map - Now takes more space -->
                 <div class="lg:col-span-2">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="card-modern">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-secondary-50">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
-                                    <MapIcon class="h-5 w-5 text-gray-400 mr-2" />
-                                    <h3 class="text-lg font-semibold text-gray-900">Live Vehicle Tracking</h3>
+                                    <div class="p-3 bg-blue-100 rounded-xl">
+                                        <MapIcon class="w-6 h-6 text-blue-600" />
+                                    </div>
+                                    <div class="ml-4">
+                                        <h3 class="text-xl font-bold text-gray-900">Live Vehicle Tracking</h3>
+                                        <p class="text-sm text-gray-600">Real-time driver locations and status</p>
+                                    </div>
                                 </div>
                                 <button 
                                     @click="refreshDashboardData" 
-                                    class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    class="btn-secondary-modern"
                                 >
                                     <ClockIcon class="h-4 w-4 mr-1.5" />
                                     Refresh
@@ -319,43 +358,54 @@ function addOrUpdateMarker(location) {
                     </div>
                 </div>
                 
-                <!-- Quick Stats -->
-                <div class="space-y-6">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                        <div class="space-y-3">
-                            <Link :href="route('drivers.create')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                Add New Driver
-                            </Link>
-                            <Link :href="route('vehicles.create')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                Add New Vehicle
-                            </Link>
-                            <Link :href="route('routes.create')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                Create Route
-                            </Link>
+                <!-- Weekly Schedule Preview -->
+                <div class="lg:col-span-1">
+                    <div class="card-modern">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-secondary-50">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Weekly Schedule</h3>
+                                    <p class="text-sm text-gray-600">Current week overview</p>
+                                </div>
+                                <Link :href="route('schedules.index')" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                                    View All →
+                                </Link>
+                            </div>
+                            
+                            <!-- Week Navigation -->
+                            <div class="flex items-center justify-between">
+                                <button @click="previousWeek" class="p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all duration-200">
+                                    <ChevronLeftIcon class="w-4 h-4 text-gray-600" />
+                                </button>
+                                <span class="text-sm font-medium text-gray-900">Week {{ currentWeek + 1 }}</span>
+                                <button @click="nextWeek" class="p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all duration-200">
+                                    <ChevronRightIcon class="w-4 h-4 text-gray-600" />
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-600">GPS Tracking</span>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    Online
-                                </span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-600">SMS Gateway</span>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    Active
-                                </span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-600">API Status</span>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    Healthy
-                                </span>
+
+                        <!-- Mini Calendar Grid -->
+                        <div class="p-4">
+                            <div class="space-y-3">
+                                <div v-for="day in weekDays.slice(0, 5)" :key="day" class="border-b border-gray-100 pb-2 last:border-b-0">
+                                    <h4 class="text-xs font-medium text-gray-500 mb-2">{{ day }}</h4>
+                                    <div class="space-y-1">
+                                        <template v-for="vehicle in uniqueVehicles.slice(0, 3)" :key="vehicle.id">
+                                            <div 
+                                                v-for="schedule in getSchedulesForVehicleAndDay(vehicle.id, day).slice(0, 2)" 
+                                                :key="`${schedule.id}-${vehicle.id}`"
+                                                :class="getScheduleColorClass(schedule)"
+                                                class="text-xs text-white p-2 rounded-lg"
+                                            >
+                                                <div class="font-medium truncate">{{ schedule.driver?.user?.name }}</div>
+                                                <div class="opacity-90">{{ schedule.departure_time }}</div>
+                                            </div>
+                                        </template>
+                                        <div v-if="getSchedulesForVehicleAndDay(uniqueVehicles[0]?.id, day).length === 0" class="text-xs text-gray-400 p-2">
+                                            No schedules
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -363,8 +413,8 @@ function addOrUpdateMarker(location) {
             </div>
 
             <!-- Recent Activities Table -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
+            <div class="card-modern">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-secondary-50">
                     <h3 class="text-lg font-semibold text-gray-900">Recent Activities</h3>
                     <p class="text-sm text-gray-600">Live tracking data from active drivers</p>
                 </div>
@@ -381,7 +431,7 @@ function addOrUpdateMarker(location) {
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            <tr v-for="location in locations.slice(0, 10)" :key="location.id" class="hover:bg-gray-50">
+                            <tr v-for="location in locations.slice(0, 10)" :key="location.id" class="hover:bg-gray-50 transition-colors duration-150">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
