@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 
 use App\Models\Incident;
 use App\Models\Driver;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
@@ -248,5 +249,37 @@ class IncidentController extends Controller
 
         return redirect()->route('incidents.index')
             ->with('success', 'Incident deleted successfully.');
+    }
+    
+    public function resolve(Request $request, Incident $incident)
+    {
+        // Only update if not already resolved or closed
+        if (!in_array($incident->status, ['resolved', 'closed'])) {
+            $incident->update([
+                'status' => 'resolved',
+                'resolved_at' => now(),
+                'resolution_notes' => $request->input('resolution_notes', 'Incident marked as resolved.')
+            ]);
+            
+            // Optionally notify the driver
+            if ($incident->driver && $incident->driver->user) {
+                Notification::create([
+                    'user_id' => $incident->driver->user_id,
+                    'title' => 'Incident Update',
+                    'message' => 'Your reported incident has been resolved by the support team.',
+                    'type' => 'incident',
+                ]);
+            }
+        }
+        
+        // Return JSON response instead of redirect for AJAX calls
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Incident marked as resolved.'
+            ]);
+        }
+        
+        return redirect()->back()->with('success', 'Incident marked as resolved.');
     }
 }

@@ -442,9 +442,18 @@ const stats = computed(() => {
     return { total, activeToday, thisWeek, driversScheduled };
 });
 
+// Add the week filtering
+const currentWeekSchedules = computed(() => {
+    if (!props.schedules.data) return [];
+    
+    // For now, return all schedules since we don't have date-based filtering
+    // In a real implementation, you'd filter based on currentWeek.value
+    return props.schedules.data;
+});
+
 const uniqueVehicles = computed(() => {
     const vehicles = new Map();
-    props.schedules.data.forEach(schedule => {
+    currentWeekSchedules.value.forEach(schedule => {
         if (schedule.vehicle) {
             vehicles.set(schedule.vehicle.id, schedule.vehicle);
         }
@@ -548,10 +557,12 @@ function calculateDuration(departureTime, arrivalTime) {
     }
 }
 
+// Update the getSchedulesForVehicleAndDay function
 function getSchedulesForVehicleAndDay(vehicleId, day) {
-    return props.schedules.data.filter(schedule => 
+    return currentWeekSchedules.value.filter(schedule => 
         schedule.vehicle?.id === vehicleId && 
-        schedule.day_of_week === day
+        schedule.day_of_week === day.toLowerCase() &&
+        schedule.is_active
     );
 }
 
@@ -566,12 +577,17 @@ function getScheduleColorClass(schedule) {
     return colors[schedule.id % colors.length];
 }
 
+// Update week navigation functions
 function previousWeek() {
     currentWeek.value = Math.max(0, currentWeek.value - 1);
+    // Add API call here to fetch data for the new week
+    router.get(route('schedules.index'), { week: currentWeek.value }, { preserveState: true });
 }
 
 function nextWeek() {
     currentWeek.value = currentWeek.value + 1;
+    // Add API call here to fetch data for the new week
+    router.get(route('schedules.index'), { week: currentWeek.value }, { preserveState: true });
 }
 
 function getCurrentWeekDateRange() {

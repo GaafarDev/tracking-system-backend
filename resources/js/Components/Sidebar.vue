@@ -1,91 +1,98 @@
 <template>
   <div class="flex h-screen">
-    <!-- Desktop Sidebar -->
-    <div class="hidden md:flex md:w-72 md:flex-col">
+    <!-- Desktop Sidebar - Hover to expand -->
+    <div class="hidden md:flex md:flex-col md:w-20 hover:md:w-72 transition-all duration-300 ease-in-out group">
       <div class="flex flex-col flex-grow pt-5 overflow-y-auto bg-white/80 backdrop-blur-xl border-r border-gray-200/80 shadow-elegant">
         <!-- Logo -->
         <div class="flex items-center flex-shrink-0 px-6 pb-4">
-          <Link :href="route('dashboard')" class="flex items-center group">
+          <Link :href="route('dashboard')" class="flex items-center group-hover:group">
             <div class="relative">
-              <div class="h-10 w-10 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-xl flex items-center justify-center transform transition-transform group-hover:scale-105">
+              <div class="h-10 w-10 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-xl flex items-center justify-center transform transition-transform hover:scale-105">
                 <span class="text-white font-bold text-xl">ML</span>
               </div>
-              <div class="absolute -inset-2 bg-primary-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
-            <div class="ml-3">
+            <div class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
               <span class="text-2xl font-bold text-gradient-primary">MaraLinear</span>
               <div class="text-xs text-gray-500 font-medium">Transport Management</div>
             </div>
           </Link>
         </div>
         
-        <!-- Navigation -->
-        <div class="mt-4 flex-1 flex flex-col px-4">
+        <!-- Navigation with hover labels -->
+        <div class="mt-4 flex-1 flex flex-col px-2">
           <nav class="flex-1 space-y-2">
             <!-- Dashboard -->
-            <Link :href="route('dashboard')" 
-                  :class="[route().current('dashboard') ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25' : 'text-gray-700 hover:bg-gray-50', 'group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
-              <HomeIcon :class="[route().current('dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-gray-600', 'mr-3 h-5 w-5 transition-colors']" />
-              Dashboard
-              <div v-if="route().current('dashboard')" class="ml-auto w-2 h-2 bg-white rounded-full"></div>
-            </Link>
+            <div class="relative">
+              <Link :href="route('dashboard')" 
+                    :class="[route().current('dashboard') ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-2 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                <HomeIcon :class="[route().current('dashboard') ? 'text-white' : 'text-gray-400 group-hover/item:text-gray-600', 'h-6 w-6 transition-colors flex-shrink-0 group-hover:mr-3']" />
+                <span class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Dashboard</span>
+              </Link>
+            </div>
 
             <!-- Drivers -->
-            <Link :href="route('drivers.index')" 
-                  :class="[route().current('drivers.*') ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25' : 'text-gray-700 hover:bg-gray-50', 'group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
-              <UserGroupIcon :class="[route().current('drivers.*') ? 'text-white' : 'text-gray-400 group-hover:text-gray-600', 'mr-3 h-5 w-5 transition-colors']" />
-              Drivers
-              <div v-if="route().current('drivers.*')" class="ml-auto w-2 h-2 bg-white rounded-full"></div>
-            </Link>
+            <div class="relative">
+              <Link :href="route('drivers.index')" 
+                    :class="[route().current('drivers.*') ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-2 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                <UserGroupIcon :class="[route().current('drivers.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-6 w-6 transition-colors flex-shrink-0 group-hover:mr-3']" />
+                <span class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Drivers</span>
+              </Link>
+            </div>
 
             <!-- Vehicles -->
-            <Link :href="route('vehicles.index')" 
-                  :class="[route().current('vehicles.*') ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25' : 'text-gray-700 hover:bg-gray-50', 'group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
-              <TruckIcon :class="[route().current('vehicles.*') ? 'text-white' : 'text-gray-400 group-hover:text-gray-600', 'mr-3 h-5 w-5 transition-colors']" />
-              Vehicles
-              <div v-if="route().current('vehicles.*')" class="ml-auto w-2 h-2 bg-white rounded-full"></div>
-            </Link>
+            <div class="relative">
+              <Link :href="route('vehicles.index')" 
+                    :class="[route().current('vehicles.*') ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-2 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                <TruckIcon :class="[route().current('vehicles.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-6 w-6 transition-colors flex-shrink-0 group-hover:mr-3']" />
+                <span class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Vehicles</span>
+              </Link>
+            </div>
 
             <!-- Routes -->
-            <Link :href="route('routes.index')" 
-                  :class="[route().current('routes.*') ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/25' : 'text-gray-700 hover:bg-gray-50', 'group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
-              <MapIcon :class="[route().current('routes.*') ? 'text-white' : 'text-gray-400 group-hover:text-gray-600', 'mr-3 h-5 w-5 transition-colors']" />
-              Routes
-              <div v-if="route().current('routes.*')" class="ml-auto w-2 h-2 bg-white rounded-full"></div>
-            </Link>
+            <div class="relative">
+              <Link :href="route('routes.index')" 
+                    :class="[route().current('routes.*') ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-2 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                <MapIcon :class="[route().current('routes.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-6 w-6 transition-colors flex-shrink-0 group-hover:mr-3']" />
+                <span class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Routes</span>
+              </Link>
+            </div>
 
             <!-- Schedules -->
-            <Link :href="route('schedules.index')" 
-                  :class="[route().current('schedules.*') ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25' : 'text-gray-700 hover:bg-gray-50', 'group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
-              <CalendarIcon :class="[route().current('schedules.*') ? 'text-white' : 'text-gray-400 group-hover:text-gray-600', 'mr-3 h-5 w-5 transition-colors']" />
-              Schedules
-              <div v-if="route().current('schedules.*')" class="ml-auto w-2 h-2 bg-white rounded-full"></div>
-            </Link>
+            <div class="relative">
+              <Link :href="route('schedules.index')" 
+                    :class="[route().current('schedules.*') ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-2 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                <CalendarIcon :class="[route().current('schedules.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-6 w-6 transition-colors flex-shrink-0 group-hover:mr-3']" />
+                <span class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Schedules</span>
+              </Link>
+            </div>
 
             <!-- Incidents -->
-            <Link :href="route('incidents.index')" 
-                  :class="[route().current('incidents.*') ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25' : 'text-gray-700 hover:bg-gray-50', 'group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
-              <ExclamationTriangleIcon :class="[route().current('incidents.*') ? 'text-white' : 'text-gray-400 group-hover:text-gray-600', 'mr-3 h-5 w-5 transition-colors']" />
-              Incidents
-              <div v-if="route().current('incidents.*')" class="ml-auto w-2 h-2 bg-white rounded-full"></div>
-            </Link>
+            <div class="relative">
+              <Link :href="route('incidents.index')" 
+                    :class="[route().current('incidents.*') ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-2 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                <ExclamationTriangleIcon :class="[route().current('incidents.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-6 w-6 transition-colors flex-shrink-0 group-hover:mr-3']" />
+                <span class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Incidents</span>
+              </Link>
+            </div>
 
             <!-- SOS Alerts -->
-            <Link :href="route('sos.index')" 
-                  :class="[route().current('sos.*') ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25' : 'text-gray-700 hover:bg-gray-50', 'group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md relative']">
-              <ShieldExclamationIcon :class="[route().current('sos.*') ? 'text-white' : 'text-gray-400 group-hover:text-gray-600', 'mr-3 h-5 w-5 transition-colors']" />
-              SOS Alerts
-              <div v-if="route().current('sos.*')" class="ml-auto w-2 h-2 bg-white rounded-full"></div>
-              <span v-if="activeSosCount > 0" class="absolute -top-1 -right-1 h-6 w-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold animate-pulse-gentle">{{ activeSosCount }}</span>
-            </Link>
+            <div class="relative">
+              <Link :href="route('sos.index')" 
+                    :class="[route().current('sos.*') ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-2 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md relative']">
+                <ShieldExclamationIcon :class="[route().current('sos.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-6 w-6 transition-colors flex-shrink-0 group-hover:mr-3']" />
+                <span class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">SOS Alerts</span>
+                <div v-if="activeSosCount > 0" class="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">{{ activeSosCount }}</div>
+              </Link>
+            </div>
 
             <!-- Vendors -->
-            <Link :href="route('vendors.index')" 
-                  :class="[route().current('vendors.*') ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25' : 'text-gray-700 hover:bg-gray-50', 'group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
-              <BuildingOfficeIcon :class="[route().current('vendors.*') ? 'text-white' : 'text-gray-400 group-hover:text-gray-600', 'mr-3 h-5 w-5 transition-colors']" />
-              Vendors
-              <div v-if="route().current('vendors.*')" class="ml-auto w-2 h-2 bg-white rounded-full"></div>
-            </Link>
+            <div class="relative">
+              <Link :href="route('vendors.index')" 
+                    :class="[route().current('vendors.*') ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-2 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                <BuildingOfficeIcon :class="[route().current('vendors.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-6 w-6 transition-colors flex-shrink-0 group-hover:mr-3']" />
+                <span class="ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Vendors</span>
+              </Link>
+            </div>
           </nav>
         </div>
       </div>
@@ -117,7 +124,95 @@
                   </button>
                 </div>
               </TransitionChild>
-              <!-- Same navigation content as desktop but optimized for mobile -->
+              <!-- Mobile navigation content (same as desktop but without collapse feature) -->
+              <div class="pt-5 pb-4 overflow-y-auto">
+                <!-- Logo -->
+                <div class="flex items-center flex-shrink-0 px-6 pb-4">
+                  <Link :href="route('dashboard')" class="flex items-center group">
+                    <div class="relative">
+                      <div class="h-10 w-10 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-xl flex items-center justify-center transform transition-transform group-hover:scale-105">
+                        <span class="text-white font-bold text-xl">ML</span>
+                      </div>
+                    </div>
+                    <div class="ml-3">
+                      <span class="text-2xl font-bold text-gradient-primary">MaraLinear</span>
+                      <div class="text-xs text-gray-500 font-medium">Transport Management</div>
+                    </div>
+                  </Link>
+                </div>
+                
+                <!-- Mobile Navigation Items -->
+                <nav class="px-4 space-y-2">
+                  <!-- Same navigation items as desktop but without collapse considerations -->
+                  <Link :href="route('dashboard')" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md" :class="[route().current('dashboard') ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25' : 'text-gray-700 hover:bg-gray-50']">
+                    <HomeIcon class="mr-3 h-5 w-5 transition-colors" :class="[route().current('dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-gray-600']" />
+                    Dashboard
+                  </Link>
+                  <!-- Drivers -->
+                  <div class="relative">
+                    <Link :href="route('drivers.index')" 
+                          :class="[route().current('drivers.*') ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                      <UserGroupIcon :class="[route().current('drivers.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-5 w-5 transition-colors mx-auto group-hover:mx-0 group-hover:mr-3']" />
+                      <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Drivers</span>
+                    </Link>
+                  </div>
+
+                  <!-- Vehicles -->
+                  <div class="relative">
+                    <Link :href="route('vehicles.index')" 
+                          :class="[route().current('vehicles.*') ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                      <TruckIcon :class="[route().current('vehicles.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-5 w-5 transition-colors mx-auto group-hover:mx-0 group-hover:mr-3']" />
+                      <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Vehicles</span>
+                    </Link>
+                  </div>
+
+                  <!-- Routes -->
+                  <div class="relative">
+                    <Link :href="route('routes.index')" 
+                          :class="[route().current('routes.*') ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                      <MapIcon :class="[route().current('routes.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-5 w-5 transition-colors mx-auto group-hover:mx-0 group-hover:mr-3']" />
+                      <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Routes</span>
+                    </Link>
+                  </div>
+
+                  <!-- Schedules -->
+                  <div class="relative">
+                    <Link :href="route('schedules.index')" 
+                          :class="[route().current('schedules.*') ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                      <CalendarIcon :class="[route().current('schedules.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-5 w-5 transition-colors mx-auto group-hover:mx-0 group-hover:mr-3']" />
+                      <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Schedules</span>
+                    </Link>
+                  </div>
+
+                  <!-- Incidents -->
+                  <div class="relative">
+                    <Link :href="route('incidents.index')" 
+                          :class="[route().current('incidents.*') ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                      <ExclamationTriangleIcon :class="[route().current('incidents.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-5 w-5 transition-colors mx-auto group-hover:mx-0 group-hover:mr-3']" />
+                      <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Incidents</span>
+                    </Link>
+                  </div>
+
+                  <!-- SOS Alerts -->
+                  <div class="relative">
+                    <Link :href="route('sos.index')" 
+                          :class="[route().current('sos.*') ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md relative']">
+                      <ShieldExclamationIcon :class="[route().current('sos.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-5 w-5 transition-colors mx-auto group-hover:mx-0 group-hover:mr-3']" />
+                      <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">SOS Alerts</span>
+                      <div v-if="activeSosCount > 0" class="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">{{ activeSosCount }}</div>
+                    </Link>
+                  </div>
+
+                  <!-- Vendors -->
+                  <div class="relative">
+                    <Link :href="route('vendors.index')" 
+                          :class="[route().current('vendors.*') ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25' : 'text-gray-700 hover:bg-gray-50', 'group/item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md']">
+                      <BuildingOfficeIcon :class="[route().current('vendors.*') ? 'text-white' : 'text-gray-400 group-hover:item:text-gray-600', 'h-5 w-5 transition-colors mx-auto group-hover:mx-0 group-hover:mr-3']" />
+                      <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Vendors</span>
+                    </Link>
+                  </div>
+                </nav>
+              </div>
             </DialogPanel>
           </TransitionChild>
         </div>
@@ -141,8 +236,9 @@ import {
   ExclamationTriangleIcon,
   ShieldExclamationIcon,
   BuildingOfficeIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from '@heroicons/vue/24/outline'
-import ApplicationMark from '@/Components/ApplicationMark.vue'
 
 defineProps({
   activeSosCount: {
@@ -152,4 +248,9 @@ defineProps({
 })
 
 const sidebarOpen = ref(false)
+const sidebarCollapsed = ref(false)
+
+const toggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value
+}
 </script>

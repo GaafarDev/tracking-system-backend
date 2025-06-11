@@ -26,7 +26,7 @@ Route::options('{any}', function () {
 })->where('any', '.*');
 
 // Protected routes
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
     // User info
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -74,11 +74,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/incidents/report', [IncidentController::class, 'report']); // Mobile app
     Route::get('/incidents', [IncidentController::class, 'getIncidents']); // Mobile app - get driver's incidents
     
+    // Incident management routes
+    Route::resource('incidents', \App\Http\Controllers\API\IncidentController::class);
+    Route::post('incidents/{incident}/resolve', [\App\Http\Controllers\API\IncidentController::class, 'resolve'])->name('incidents.resolve');
+    
     // Admin-only incident management
     Route::middleware('admin')->group(function () {
         Route::get('/incidents/all', [IncidentController::class, 'index']); // Admin view all incidents
         Route::get('/incidents/{incident}', [IncidentController::class, 'show']);
         Route::put('/incidents/{incident}', [IncidentController::class, 'update']);
+        Route::post('/incidents/{incident}/resolve', [IncidentController::class, 'resolve']); // Add this line
         Route::delete('/incidents/{incident}', [IncidentController::class, 'destroy']);
     });
     

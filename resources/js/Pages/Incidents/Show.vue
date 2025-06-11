@@ -73,6 +73,29 @@
                             </dl>
                         </div>
                     </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-6 flex items-center space-x-4">
+                        <button 
+                            v-if="!['resolved', 'closed'].includes(incidentData.status)" 
+                            @click="resolveIncident" 
+                            class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700"
+                        >
+                            Mark as Resolved
+                        </button>
+                        <Link 
+                            :href="route('incidents.edit', incidentData.id)" 
+                            class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700"
+                        >
+                            Edit Incident
+                        </Link>
+                        <Link 
+                            :href="route('incidents.index')" 
+                            class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700"
+                        >
+                            Back to Incidents
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>
@@ -80,8 +103,10 @@
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import axios from 'axios';
 
 const props = defineProps({
     incident: Object,
@@ -121,5 +146,15 @@ function getStatusColor(status) {
         default:
             return 'bg-gray-100 text-gray-800';
     }
+}
+
+function resolveIncident() {
+    axios.post(`/incidents/${props.incident.id}/resolve`)
+        .then(() => {
+            router.reload();
+        })
+        .catch(error => {
+            console.error('Error resolving incident:', error);
+        });
 }
 </script>

@@ -64,6 +64,9 @@ Route::middleware([
     Route::resource('schedules', ScheduleController::class);
     Route::resource('incidents', IncidentController::class);
     
+    // Add this route for incident resolution
+    Route::post('/incidents/{incident}/resolve', [IncidentController::class, 'resolve'])->name('incidents.resolve');
+    
     // Add this route for password reset
     Route::post('/drivers/{driver}/reset-password', [DriverController::class, 'resetPassword'])
         ->name('drivers.reset-password');
