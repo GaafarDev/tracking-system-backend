@@ -63,7 +63,7 @@ class VehicleController extends Controller
             'plate_number' => 'required|string|unique:vehicles,plate_number',
             'model' => 'required|string',
             'capacity' => 'required|integer|min:1',
-            'type' => 'required|in:bus,van,car,boat,other',
+            'type' => 'required|in:school_bus,mini_bus,van,car,boat,truck,other',
             'status' => 'required|in:active,maintenance,inactive',
         ]);
         

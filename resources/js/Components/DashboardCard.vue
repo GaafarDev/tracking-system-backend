@@ -1,8 +1,7 @@
 <template>
   <div class="group relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-sm border border-gray-200/50 shadow-soft hover:shadow-elegant transition-all duration-300 hover:-translate-y-1"
-       v-motion
-       :initial="{ opacity: 0, y: 20 }"
-       :enter="{ opacity: 1, y: 0, transition: { delay: animationDelay } }">
+       :style="{ animationDelay: `${animationDelay}ms` }"
+       :class="{ 'animate-fade-in-up': shouldAnimate }">
     <!-- Gradient overlay -->
     <div class="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-gray-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
     
@@ -29,12 +28,14 @@
       <div v-if="showProgress" class="mt-4">
         <div class="flex justify-between items-center mb-1">
           <span class="text-xs text-gray-500">Progress</span>
-          <span class="text-xs font-medium text-gray-700">{{ progressPercentage }}%</span>
+          <span class="text-xs text-gray-500">{{ progress }}%</span>
         </div>
         <div class="w-full bg-gray-200 rounded-full h-2">
-          <div class="h-2 rounded-full transition-all duration-1000 ease-out" 
-               :class="progressBarClass" 
-               :style="{ width: progressPercentage + '%' }"></div>
+          <div 
+            class="h-2 rounded-full transition-all duration-1000 ease-out" 
+            :class="progressBarClass"
+            :style="{ width: `${progress}%` }"
+          ></div>
         </div>
       </div>
     </div>
@@ -42,38 +43,21 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
+import { computed, onMounted, ref } from 'vue'
 
 const props = defineProps({
-  title: {
-    type: String,
-    required: true
-  },
-  value: {
-    type: [String, Number],
-    required: true
-  },
-  subtitle: {
-    type: String,
-    default: ''
-  },
-  subtitleType: {
-    type: String,
-    default: 'neutral',
-    validator: (value) => ['success', 'warning', 'danger', 'neutral'].includes(value)
-  },
-  subtitleIcon: {
-    type: Object,
-    default: null
-  },
-  icon: {
-    type: Object,
-    required: true
-  },
+  title: String,
+  value: [Number, String],
+  icon: Object,
   iconColor: {
     type: String,
     default: 'blue'
+  },
+  subtitle: String,
+  subtitleIcon: Object,
+  subtitleType: {
+    type: String,
+    default: 'neutral'
   },
   animationDelay: {
     type: Number,
@@ -83,77 +67,83 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  progressValue: {
+  progress: {
     type: Number,
     default: 0
-  },
-  progressMax: {
-    type: Number,
-    default: 100
   }
 })
 
+const shouldAnimate = ref(false)
+
+onMounted(() => {
+  // Trigger animation after component mounts
+  setTimeout(() => {
+    shouldAnimate.value = true
+  }, 50)
+})
+
 const formatValue = (value) => {
-  if (typeof value === 'number' && value >= 1000) {
-    return (value / 1000).toFixed(1) + 'k'
+  if (typeof value === 'number') {
+    return value.toLocaleString()
   }
   return value
 }
 
-const progressPercentage = computed(() => {
-  if (!props.showProgress) return 0
-  return Math.min(Math.round((props.progressValue / props.progressMax) * 100), 100)
-})
-
-const subtitleClass = computed(() => {
-  const classes = {
-    success: 'text-emerald-600',
-    warning: 'text-amber-600',
-    danger: 'text-red-600',
-    neutral: 'text-gray-600'
-  }
-  return classes[props.subtitleType]
-})
-
 const iconBgClass = computed(() => {
-  const classes = {
+  const colors = {
     blue: 'bg-blue-100 group-hover:bg-blue-200',
-    green: 'bg-emerald-100 group-hover:bg-emerald-200',
-    yellow: 'bg-amber-100 group-hover:bg-amber-200',
+    green: 'bg-green-100 group-hover:bg-green-200',
     red: 'bg-red-100 group-hover:bg-red-200',
-    gray: 'bg-gray-100 group-hover:bg-gray-200',
+    yellow: 'bg-yellow-100 group-hover:bg-yellow-200',
     purple: 'bg-purple-100 group-hover:bg-purple-200',
     indigo: 'bg-indigo-100 group-hover:bg-indigo-200',
+    pink: 'bg-pink-100 group-hover:bg-pink-200',
+    gray: 'bg-gray-100 group-hover:bg-gray-200',
+    orange: 'bg-orange-100 group-hover:bg-orange-200',
     teal: 'bg-teal-100 group-hover:bg-teal-200'
   }
-  return classes[props.iconColor]
+  return colors[props.iconColor] || colors.blue
 })
 
 const iconClass = computed(() => {
-  const classes = {
-    blue: 'text-blue-600 group-hover:text-blue-700',
-    green: 'text-emerald-600 group-hover:text-emerald-700',
-    yellow: 'text-amber-600 group-hover:text-amber-700',
-    red: 'text-red-600 group-hover:text-red-700',
-    gray: 'text-gray-600 group-hover:text-gray-700',
-    purple: 'text-purple-600 group-hover:text-purple-700',
-    indigo: 'text-indigo-600 group-hover:text-indigo-700',
-    teal: 'text-teal-600 group-hover:text-teal-700'
+  const colors = {
+    blue: 'text-blue-600',
+    green: 'text-green-600',
+    red: 'text-red-600',
+    yellow: 'text-yellow-600',
+    purple: 'text-purple-600',
+    indigo: 'text-indigo-600',
+    pink: 'text-pink-600',
+    gray: 'text-gray-600',
+    orange: 'text-orange-600',
+    teal: 'text-teal-600'
   }
-  return classes[props.iconColor]
+  return colors[props.iconColor] || colors.blue
+})
+
+const subtitleClass = computed(() => {
+  const types = {
+    success: 'text-green-600',
+    danger: 'text-red-600',
+    warning: 'text-yellow-600',
+    neutral: 'text-gray-500'
+  }
+  return types[props.subtitleType] || types.neutral
 })
 
 const progressBarClass = computed(() => {
-  const classes = {
-    blue: 'bg-gradient-to-r from-blue-500 to-blue-600',
-    green: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
-    yellow: 'bg-gradient-to-r from-amber-500 to-amber-600',
-    red: 'bg-gradient-to-r from-red-500 to-red-600',
-    gray: 'bg-gradient-to-r from-gray-500 to-gray-600',
-    purple: 'bg-gradient-to-r from-purple-500 to-purple-600',
-    indigo: 'bg-gradient-to-r from-indigo-500 to-indigo-600',
-    teal: 'bg-gradient-to-r from-teal-500 to-teal-600'
+  const colors = {
+    blue: 'bg-blue-500',
+    green: 'bg-green-500',
+    red: 'bg-red-500',
+    yellow: 'bg-yellow-500',
+    purple: 'bg-purple-500',
+    indigo: 'bg-indigo-500',
+    pink: 'bg-pink-500',
+    gray: 'bg-gray-500',
+    orange: 'bg-orange-500',
+    teal: 'bg-teal-500'
   }
-  return classes[props.iconColor]
+  return colors[props.iconColor] || colors.blue
 })
 </script>

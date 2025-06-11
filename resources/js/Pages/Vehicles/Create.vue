@@ -33,6 +33,32 @@
                 <!-- Form Content -->
                 <form @submit.prevent="submit" class="p-6 bg-white">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Vendor Selection -->
+                        <div class="md:col-span-2">
+                            <label for="vendor_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <span class="flex items-center">
+                                    <BuildingOfficeIcon class="w-4 h-4 mr-2 text-gray-500" />
+                                    Vendor
+                                    <span class="text-red-500 ml-1">*</span>
+                                </span>
+                            </label>
+                            <select
+                                id="vendor_id"
+                                v-model="form.vendor_id"
+                                class="form-select w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white"
+                                required
+                            >
+                                <option value="" class="text-gray-500">Select Vendor</option>
+                                <option v-for="vendor in vendors" :key="vendor.id" :value="vendor.id" class="text-gray-900">
+                                    {{ vendor.name }}
+                                </option>
+                            </select>
+                            <p v-if="form.errors.vendor_id" class="mt-2 text-sm text-red-600 flex items-center">
+                                <ExclamationCircleIcon class="w-4 h-4 mr-1" />
+                                {{ form.errors.vendor_id }}
+                            </p>
+                        </div>
+
                         <!-- Plate Number -->
                         <div>
                             <label for="plate_number" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -238,10 +264,19 @@ import {
     XCircleIcon,
     XMarkIcon,
     PlusIcon,
-    ExclamationCircleIcon
+    ExclamationCircleIcon,
+    BuildingOfficeIcon
 } from '@heroicons/vue/24/outline';
 
+const props = defineProps({
+    vendors: Array,
+});
+
+// Add this for debugging
+console.log('Vendors prop:', props.vendors);
+
 const form = useForm({
+    vendor_id: '',
     plate_number: '',
     model: '',
     type: '',
