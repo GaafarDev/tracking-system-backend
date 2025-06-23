@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API; // Update this line
+namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
@@ -9,9 +9,6 @@ use App\Models\Driver;
 
 class LocationController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $locations = Location::with(['driver', 'vehicle'])
@@ -21,9 +18,6 @@ class LocationController extends Controller
         return response()->json($locations);
     }
 
-    /**
-     * Update the driver's current location.
-     */
     public function updateLocation(Request $request)
     {
         $validated = $request->validate([
