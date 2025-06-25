@@ -317,6 +317,7 @@ class ScheduleController extends Controller
 
     public function show(Schedule $schedule)
     {
+        // Load the necessary relationships
         $schedule->load(['route', 'driver.user', 'vehicle']);
         
         return Inertia::render('Schedules/Show', [

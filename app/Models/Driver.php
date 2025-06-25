@@ -34,9 +34,9 @@ class Driver extends Model
         return $this->belongsToMany(Vehicle::class, 'schedules');
     }
 
-    public function locations()
+    public function schedules()
     {
-        return $this->hasMany(Location::class);
+        return $this->hasMany(Schedule::class);
     }
 
     public function incidents()
@@ -44,13 +44,13 @@ class Driver extends Model
         return $this->hasMany(Incident::class);
     }
 
-    public function schedules()
-    {
-        return $this->hasMany(Schedule::class);
-    }
-
     public function sosAlerts()
     {
         return $this->hasMany(SosAlert::class);
+    }
+
+    public function locations()
+    {
+        return $this->hasMany(Location::class);
     }
 }

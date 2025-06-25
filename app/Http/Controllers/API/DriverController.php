@@ -184,12 +184,36 @@ class DriverController extends Controller
      */
     public function destroy(Driver $driver)
     {
+        // Check if driver has associated schedules
+        $schedulesCount = $driver->schedules()->count();
+        if ($schedulesCount > 0) {
+            return back()->with('error', "Cannot delete driver. This driver has {$schedulesCount} associated schedule(s). Please remove or reassign all schedules first.");
+        }
+        
+        // Check if driver has associated incidents
+        $incidentsCount = $driver->incidents()->count();
+        if ($incidentsCount > 0) {
+            return back()->with('error', "Cannot delete driver. This driver has {$incidentsCount} associated incident(s). Please resolve all incidents first.");
+        }
+        
+        // Check if driver has associated SOS alerts
+        $sosAlertsCount = $driver->sosAlerts()->count();
+        if ($sosAlertsCount > 0) {
+            return back()->with('error', "Cannot delete driver. This driver has {$sosAlertsCount} associated SOS alert(s). Please resolve all alerts first.");
+        }
+        
+        // If no constraints, proceed with deletion
         $user = $driver->user;
+        $driverName = $driver->user->name;
+        
         $driver->delete();
-        $user->delete();
+        
+        // Delete the associated user account
+        if ($user) {
+            $user->delete();
+        }
 
-        return redirect()->route('drivers.index')
-            ->with('success', 'Driver deleted successfully.');
+        return back()->with('success', "Driver '{$driverName}' deleted successfully.");
     }
 
     // API method for mobile app - Only drivers can access this
