@@ -119,3 +119,21 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     });
 });
+
+// Test upload route
+Route::post('/test-upload', function (Request $request) {
+    \Log::info('Test upload request received');
+    \Log::info('Has file: ' . ($request->hasFile('photo') ? 'YES' : 'NO'));
+    \Log::info('All files: ' . json_encode($request->allFiles()));
+    
+    if ($request->hasFile('photo')) {
+        $photo = $request->file('photo');
+        \Log::info('Photo details: ' . json_encode([
+            'name' => $photo->getClientOriginalName(),
+            'size' => $photo->getSize(),
+            'mime' => $photo->getMimeType(),
+        ]));
+    }
+    
+    return response()->json(['status' => 'received']);
+});

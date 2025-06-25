@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class IncidentController extends Controller
 {
@@ -16,17 +17,19 @@ class IncidentController extends Controller
     {
         Log::info('=== INCIDENT REPORT START ===', [
             'user_id' => $request->user()->id ?? 'null',
-            'request_data' => $request->except(['photo']) // Don't log photo data
+            'has_photo' => $request->hasFile('photo') ? 'YES' : 'NO',
+            'all_files' => array_keys($request->allFiles()),
+            'content_type' => $request->header('Content-Type')
         ]);
 
         try {
-            // Simplified validation - make photo optional and smaller
+            // Validation
             $validated = $request->validate([
                 'type' => 'required|string|in:accident,breakdown,road_obstruction,weather,other',
                 'description' => 'required|string|max:1000',
                 'latitude' => 'required|numeric|between:-90,90',
                 'longitude' => 'required|numeric|between:-180,180',
-                'photo' => 'nullable|image|max:2048', // Reduced to 2MB
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:10240', // 10MB max
             ]);
             
             $user = $request->user();
@@ -53,23 +56,26 @@ class IncidentController extends Controller
                 ], 404);
             }
             
-            // Handle photo upload with better error handling
+            // Handle photo upload
             $photoPath = null;
             if ($request->hasFile('photo')) {
                 try {
                     $file = $request->file('photo');
+                    Log::info('Photo file details:', [
+                        'original_name' => $file->getClientOriginalName(),
+                        'size' => $file->getSize(),
+                        'mime_type' => $file->getMimeType()
+                    ]);
                     
-                    // Check file size before processing
-                    if ($file->getSize() > 2048 * 1024) { // 2MB in bytes
-                        Log::warning('Photo too large, skipping upload', ['size' => $file->getSize()]);
-                    } else {
-                        $photoPath = $file->store('incident_photos', 'public');
-                        Log::info('Photo uploaded successfully', ['path' => $photoPath]);
-                    }
+                    $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                    $photoPath = $file->storeAs('incident_photos', $filename, 'public');
+                    Log::info('Photo uploaded successfully: ' . $photoPath);
                 } catch (\Exception $e) {
-                    Log::error('Photo upload failed', ['error' => $e->getMessage()]);
-                    // Continue without photo - don't fail the entire request
+                    Log::error('Photo upload failed: ' . $e->getMessage());
+                    // Continue without photo
                 }
+            } else {
+                Log::info('No photo file in request');
             }
             
             // Create incident record
@@ -83,24 +89,19 @@ class IncidentController extends Controller
                 'status' => 'reported',
             ]);
             
-            Log::info('Incident created successfully', ['incident_id' => $incident->id]);
+            Log::info('Incident created successfully', [
+                'incident_id' => $incident->id,
+                'has_photo' => $photoPath ? 'YES' : 'NO',
+                'photo_path' => $photoPath
+            ]);
             
             return response()->json([
                 'message' => 'Incident reported successfully',
                 'incident' => $incident,
             ], 201);
             
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Validation failed', ['errors' => $e->errors()]);
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
-            Log::error('Incident report failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error('Incident report failed: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Failed to report incident',
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
@@ -203,7 +204,11 @@ class IncidentController extends Controller
      */
     public function show(Incident $incident)
     {
+        // Make sure you're loading the incident with all necessary relationships
         $incident->load(['driver.user']);
+        
+        // Debug: Log the photo_path to see if it exists
+        \Log::info('Incident photo_path: ' . $incident->photo_path);
         
         return Inertia::render('Incidents/Show', [
             'incident' => $incident
@@ -281,5 +286,59 @@ class IncidentController extends Controller
         }
         
         return redirect()->back()->with('success', 'Incident marked as resolved.');
+    }
+    
+    public function store(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|string',
+            'description' => 'required|string',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240', // 10MB max
+        ]);
+
+        $photoPath = null;
+
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            $photo = $request->file('photo');
+            
+            // Generate unique filename
+            $filename = time() . '_' . Str::random(10) . '.' . $photo->getClientOriginalExtension();
+            
+            // Store in public/storage/incident_photos directory
+            $photoPath = $photo->storeAs('incident_photos', $filename, 'public');
+            
+            \Log::info('Photo uploaded successfully: ' . $photoPath);
+        } else {
+            \Log::info('No photo received in request');
+            \Log::info('Request files: ' . json_encode($request->allFiles()));
+        }
+
+        // Get the authenticated driver
+        $driver = $request->user()->driver;
+        
+        if (!$driver) {
+            return response()->json(['error' => 'Driver not found'], 404);
+        }
+
+        // Create incident
+        $incident = Incident::create([
+            'driver_id' => $driver->id,
+            'type' => $request->type,
+            'description' => $request->description,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'photo_path' => $photoPath, // This should not be null if photo uploaded
+            'status' => 'reported',
+        ]);
+
+        \Log::info('Incident created with photo_path: ' . $incident->photo_path);
+
+        return response()->json([
+            'message' => 'Incident reported successfully',
+            'incident' => $incident,
+        ], 201);
     }
 }

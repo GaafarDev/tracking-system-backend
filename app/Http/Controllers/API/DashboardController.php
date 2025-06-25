@@ -40,11 +40,25 @@ class DashboardController extends Controller
         // Count active SOS alerts
         $activeSosAlerts = SosAlert::where('status', 'active')->count();
         
+        // Get current week's schedules for dashboard preview
+        $schedules = Schedule::with(['route', 'driver.user', 'vehicle'])
+            ->where('is_active', true)
+            ->orderBy('day_of_week')
+            ->orderBy('departure_time')
+            ->get();
+        
         return Inertia::render('Dashboard', [
             'activeDrivers' => $latestLocations,
             'openIncidentsCount' => $openIncidents,
             'activeSosAlertsCount' => $activeSosAlerts,
-            'activeDriversCount' => $latestLocations->count(), // Make sure this is passed
+            'activeDriversCount' => $latestLocations->count(),
+            'schedules' => $schedules, // Add schedules data
+            'dashboardStats' => [
+                'activeDriversCount' => $latestLocations->count(),
+                'activeVehiclesCount' => Vehicle::where('status', 'active')->count(),
+                'openIncidentsCount' => $openIncidents,
+                'activeSosAlertsCount' => $activeSosAlerts,
+            ]
         ]);
     }
     

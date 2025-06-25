@@ -24,8 +24,8 @@ const props = defineProps({
     activeSosAlertsCount: Number,
     activeDriversCount: Number,
     activeVehiclesCount: Number,
-    schedules: Array,
-    dashboardStats: Object // New prop for dynamic stats
+    schedules: Array, // Add schedules prop
+    dashboardStats: Object
 });
 
 const locations = ref(props.activeDrivers || []);
@@ -53,16 +53,22 @@ const { success, error, warning, sosAlert } = useToast();
 const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const currentWeek = ref(0);
 
-// Get unique vehicles for schedule display
+// Get unique vehicles for schedule display - fixed implementation
 const uniqueVehicles = computed(() => {
-    if (!props.schedules) return [];
+    if (!props.schedules || props.schedules.length === 0) return [];
     const vehicles = new Map();
     props.schedules.forEach(schedule => {
         if (schedule.vehicle) {
             vehicles.set(schedule.vehicle.id, schedule.vehicle);
         }
     });
-    return Array.from(vehicles.values());
+    return Array.from(vehicles.values()).slice(0, 5); // Limit to 5 vehicles for dashboard
+});
+
+// Get current week schedules
+const currentWeekSchedules = computed(() => {
+    if (!props.schedules) return [];
+    return props.schedules.filter(schedule => schedule.is_active);
 });
 
 onMounted(async () => {
@@ -238,9 +244,9 @@ function addOrUpdateMarker(location) {
     }
 }
 
-// Schedule calendar functions
+// Schedule calendar functions - fixed implementation
 function getSchedulesForVehicleAndDay(vehicleId, day) {
-    if (!props.schedules) return [];
+    if (!props.schedules || !vehicleId || !day) return [];
     return props.schedules.filter(schedule => 
         schedule.vehicle?.id === vehicleId && 
         schedule.day_of_week === day.toLowerCase() &&
@@ -248,15 +254,45 @@ function getSchedulesForVehicleAndDay(vehicleId, day) {
     );
 }
 
+function getTodaySchedulesForVehicle(vehicleId) {
+    const today = new Date();
+    const day = today.toLocaleString('default', { weekday: 'long' }).toLowerCase();
+    return getSchedulesForVehicleAndDay(vehicleId, day);
+}
+
+function getTotalTodaySchedules() {
+    return uniqueVehicles.value.reduce((total, vehicle) => total + getTodaySchedulesForVehicle(vehicle.id).length, 0);
+}
+
+function getDayName(dayOfWeek) {
+    const dayNames = {
+        monday: 'Mon',
+        tuesday: 'Tue',
+        wednesday: 'Wed',
+        thursday: 'Thu',
+        friday: 'Fri'
+    };
+    return dayNames[dayOfWeek] || '';
+}
+
 function getScheduleColorClass(schedule) {
     const colors = [
-        'bg-gradient-to-r from-primary-500 to-primary-600',
         'bg-gradient-to-r from-blue-500 to-blue-600',
         'bg-gradient-to-r from-green-500 to-green-600',
         'bg-gradient-to-r from-purple-500 to-purple-600',
-        'bg-gradient-to-r from-secondary-500 to-secondary-600',
+        'bg-gradient-to-r from-indigo-500 to-indigo-600',
+        'bg-gradient-to-r from-pink-500 to-pink-600',
     ];
     return colors[schedule.id % colors.length];
+}
+
+function formatTime(time) {
+    if (!time) return 'N/A';
+    return time;
+}
+
+function viewSchedule(schedule) {
+    router.visit(route('schedules.show', schedule.id));
 }
 
 function previousWeek() {
@@ -329,155 +365,202 @@ function getStatChangeClass(change) {
                 />
             </div>
 
-            <!-- Main Content Grid - Improved Layout -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <!-- Expanded Live Map - Now takes more space -->
-                <div class="lg:col-span-2">
-                    <div class="card-modern">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-secondary-50">
+            <!-- Main Content - Single Column Layout -->
+            <div class="space-y-6">
+                <!-- Live Vehicle Tracking with Weekly Schedule Below -->
+                <div class="card-modern">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-secondary-50">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-blue-100 rounded-xl">
+                                    <MapIcon class="w-6 h-6 text-blue-600" />
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-xl font-bold text-gray-900">Live Vehicle Tracking</h3>
+                                    <p class="text-sm text-gray-600">Real-time driver locations and status</p>
+                                </div>
+                            </div>
+                            <button 
+                                @click="refreshDashboardData" 
+                                class="btn-secondary-modern"
+                            >
+                                <ClockIcon class="h-4 w-4 mr-1.5" />
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Live Map -->
+                    <div id="map" class="h-96"></div>
+                    
+                    <!-- Weekly Schedule Section - Now under the map -->
+                    <div class="border-t border-gray-200">
+                        <div class="px-6 py-4 bg-gray-50">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
-                                    <div class="p-3 bg-blue-100 rounded-xl">
-                                        <MapIcon class="w-6 h-6 text-blue-600" />
-                                    </div>
-                                    <div class="ml-4">
-                                        <h3 class="text-xl font-bold text-gray-900">Live Vehicle Tracking</h3>
-                                        <p class="text-sm text-gray-600">Real-time driver locations and status</p>
-                                    </div>
-                                </div>
-                                <button 
-                                    @click="refreshDashboardData" 
-                                    class="btn-secondary-modern"
-                                >
-                                    <ClockIcon class="h-4 w-4 mr-1.5" />
-                                    Refresh
-                                </button>
-                            </div>
-                        </div>
-                        <div id="map" class="h-96"></div>
-                    </div>
-                </div>
-                
-                <!-- Weekly Schedule Preview -->
-                <div class="lg:col-span-1">
-                    <div class="card-modern">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-secondary-50">
-                            <div class="flex items-center justify-between mb-4">
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900">Weekly Schedule</h3>
-                                    <p class="text-sm text-gray-600">Current week overview</p>
+                                    <ClockIcon class="w-5 h-5 text-gray-600 mr-2" />
+                                    <h4 class="text-lg font-semibold text-gray-900">Today's Schedule Overview</h4>
                                 </div>
                                 <Link :href="route('schedules.index')" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                                    View All →
+                                    View All Schedules →
                                 </Link>
                             </div>
-                            
-                            <!-- Week Navigation -->
-                            <div class="flex items-center justify-between">
-                                <button @click="previousWeek" class="p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all duration-200">
-                                    <ChevronLeftIcon class="w-4 h-4 text-gray-600" />
-                                </button>
-                                <span class="text-sm font-medium text-gray-900">Week {{ currentWeek + 1 }}</span>
-                                <button @click="nextWeek" class="p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all duration-200">
-                                    <ChevronRightIcon class="w-4 h-4 text-gray-600" />
-                                </button>
-                            </div>
                         </div>
-
-                        <!-- Mini Calendar Grid -->
-                        <div class="p-4">
-                            <div class="space-y-3">
-                                <div v-for="day in weekDays.slice(0, 5)" :key="day" class="border-b border-gray-100 pb-2 last:border-b-0">
-                                    <h4 class="text-xs font-medium text-gray-500 mb-2">{{ day }}</h4>
-                                    <div class="space-y-1">
-                                        <template v-for="vehicle in uniqueVehicles.slice(0, 3)" :key="vehicle.id">
-                                            <div 
-                                                v-for="schedule in getSchedulesForVehicleAndDay(vehicle.id, day).slice(0, 2)" 
-                                                :key="`${schedule.id}-${vehicle.id}`"
-                                                :class="getScheduleColorClass(schedule)"
-                                                class="text-xs text-white p-2 rounded-lg"
-                                            >
-                                                <div class="font-medium truncate">{{ schedule.driver?.user?.name }}</div>
-                                                <div class="opacity-90">{{ schedule.departure_time }}</div>
+                        
+                        <div class="p-6">
+                            <div v-if="uniqueVehicles.length > 0">
+                                <!-- Compact Schedule Display - Show only today's schedules -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                    <template v-for="vehicle in uniqueVehicles.slice(0, 8)" :key="vehicle.id">
+                                        <div 
+                                            v-for="schedule in getTodaySchedulesForVehicle(vehicle.id).slice(0, 1)" 
+                                            :key="`${schedule.id}-${vehicle.id}`"
+                                            :class="getScheduleColorClass(schedule)"
+                                            class="rounded-xl p-4 text-white cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1"
+                                            @click="viewSchedule(schedule)"
+                                        >
+                                            <div class="flex items-center justify-between mb-2">
+                                                <div class="flex items-center space-x-2">
+                                                    <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                                        <span class="text-sm font-bold">{{ schedule.driver?.user?.name?.charAt(0) || 'D' }}</span>
+                                                    </div>
+                                                    <div>
+                                                        <div class="font-semibold text-sm">{{ schedule.driver?.user?.name?.split(' ')[0] || 'Driver' }}</div>
+                                                        <div class="text-xs opacity-75">{{ vehicle.plate_number }}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <div class="text-sm font-medium">{{ formatTime(schedule.departure_time) }}</div>
+                                                    <div class="text-xs opacity-75">{{ getDayName(schedule.day_of_week) }}</div>
+                                                </div>
                                             </div>
-                                        </template>
-                                        <div v-if="getSchedulesForVehicleAndDay(uniqueVehicles[0]?.id, day).length === 0" class="text-xs text-gray-400 p-2">
-                                            No schedules
+                                            <div class="text-xs opacity-90 truncate">
+                                                📍 {{ schedule.route?.name || 'No route assigned' }}
+                                            </div>
                                         </div>
+                                    </template>
+                                    
+                                    <!-- Show more card if there are additional schedules -->
+                                    <div v-if="getTotalTodaySchedules() > 8" 
+                                         class="rounded-xl p-4 border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors duration-200 flex flex-col items-center justify-center"
+                                         @click="router.visit(route('schedules.index'))">
+                                        <div class="text-2xl font-bold text-gray-600 mb-1">+{{ getTotalTodaySchedules() - 8 }}</div>
+                                        <div class="text-sm text-gray-600 text-center">More schedules</div>
+                                        <div class="text-xs text-gray-500 mt-1">Click to view all</div>
                                     </div>
                                 </div>
+                                
+                                <!-- Quick Actions -->
+                                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-center space-x-4">
+                                    <Link :href="route('schedules.create')" class="btn-primary text-sm">
+                                        <ClockIcon class="w-4 h-4 mr-2" />
+                                        Create New Schedule
+                                    </Link>
+                                    <Link :href="route('schedules.index')" class="btn-secondary text-sm">
+                                        View All Schedules
+                                    </Link>
+                                </div>
+                            </div>
+                            
+                            <!-- Empty State -->
+                            <div v-else class="text-center py-8">
+                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <ClockIcon class="w-8 h-8 text-gray-400" />
+                                </div>
+                                <h4 class="text-lg font-medium text-gray-900 mb-2">No Schedules Today</h4>
+                                <p class="text-gray-500 mb-4">There are no schedules for today. Create your first schedule to get started.</p>
+                                <Link :href="route('schedules.create')" class="btn-primary text-sm">
+                                    Create Schedule
+                                </Link>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Recent Activities Table -->
-            <div class="card-modern">
-                <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-secondary-50">
-                    <h3 class="text-lg font-semibold text-gray-900">Recent Activities</h3>
-                    <p class="text-sm text-gray-600">Live tracking data from active drivers</p>
-                </div>
-                
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Seen</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Speed</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr v-for="location in locations.slice(0, 10)" :key="location.id" class="hover:bg-gray-50 transition-colors duration-150">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-                                            <span class="text-white font-medium text-sm">
-                                                {{ (location.driver?.user?.name || 'U').charAt(0).toUpperCase() }}
-                                            </span>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">
-                                                {{ location.driver?.user?.name || 'Unknown Driver' }}
+                <!-- Recent Activities Table - Simplified -->
+                <div class="card-modern">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-secondary-50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Recent Activities</h3>
+                                <p class="text-sm text-gray-600">Live tracking data from active drivers</p>
+                            </div>
+                            <div v-if="locations.length > 5" class="text-sm text-gray-600">
+                                Showing 5 of {{ locations.length }} drivers
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Seen</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Speed</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr v-for="location in locations.slice(0, 5)" :key="location.id" class="hover:bg-gray-50 transition-colors duration-150">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                                                <span class="text-white font-medium text-sm">
+                                                    {{ (location.driver?.user?.name || 'U').charAt(0).toUpperCase() }}
+                                                </span>
                                             </div>
-                                            <div class="text-sm text-gray-500">
-                                                {{ location.driver?.user?.email || 'No email' }}
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">
+                                                    {{ location.driver?.user?.name || 'Unknown Driver' }}
+                                                </div>
+                                                <div class="text-sm text-gray-500">
+                                                    {{ location.driver?.user?.email || 'No email' }}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ location.vehicle?.plate_number || 'Unknown' }}</div>
-                                    <div class="text-sm text-gray-500">{{ location.vehicle?.model || 'Unknown Model' }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ new Date(location.recorded_at).toLocaleTimeString() }}</div>
-                                    <div class="text-sm text-gray-500">{{ new Date(location.recorded_at).toLocaleDateString() }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">
-                                        {{ location.speed ? `${Math.round(location.speed)} km/h` : 'N/A' }}
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <StatusBadge status="active" />
-                                </td>
-                            </tr>
-                            
-                            <tr v-if="locations.length === 0">
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                                    <div class="flex flex-col items-center">
-                                        <TruckIcon class="h-12 w-12 text-gray-300 mb-4" />
-                                        <h3 class="text-lg font-medium text-gray-900 mb-2">No Active Drivers</h3>
-                                        <p class="text-gray-500">No drivers are currently sending location updates.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">{{ location.vehicle?.plate_number || 'Unknown' }}</div>
+                                        <div class="text-sm text-gray-500">{{ location.vehicle?.model || 'Unknown Model' }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">{{ new Date(location.recorded_at).toLocaleTimeString() }}</div>
+                                        <div class="text-sm text-gray-500">{{ new Date(location.recorded_at).toLocaleDateString() }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            {{ location.speed ? `${Math.round(location.speed)} km/h` : 'N/A' }}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <StatusBadge status="active" />
+                                    </td>
+                                </tr>
+                                
+                                <tr v-if="locations.length === 0">
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                        <div class="flex flex-col items-center">
+                                            <TruckIcon class="h-12 w-12 text-gray-300 mb-4" />
+                                            <h3 class="text-lg font-medium text-gray-900 mb-2">No Active Drivers</h3>
+                                            <p class="text-gray-500">No drivers are currently sending location updates.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- View More Button for Activities -->
+                    <div v-if="locations.length > 5" class="px-6 py-4 border-t border-gray-200 bg-gray-50 text-center">
+                        <button 
+                            @click="router.visit(route('drivers.index'))" 
+                            class="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                        >
+                            View All {{ locations.length }} Active Drivers →
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

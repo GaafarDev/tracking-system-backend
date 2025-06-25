@@ -216,10 +216,122 @@
 <script setup>
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { onMounted } from 'vue';
 
 const props = defineProps({
     schedule: Object,
 });
+
+let map = null;
+
+onMounted(() => {
+    initMap();
+});
+
+function initMap() {
+    if (!window.L) {
+        setTimeout(initMap, 500);
+        return;
+    }
+    
+    try {
+        // Initialize map
+        map = L.map('route-detail-map').setView([3.1319, 101.6841], 12); // Default to KL
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Add route stops if available
+        if (props.schedule.route?.stops && props.schedule.route.stops.length > 0) {
+            const bounds = L.latLngBounds();
+            
+            props.schedule.route.stops.forEach((stop, index) => {
+                if (stop.lat && stop.lng) {
+                    const lat = parseFloat(stop.lat);
+                    const lng = parseFloat(stop.lng);
+                    
+                    // Create stop marker
+                    const stopIcon = L.divIcon({
+                        html: `<div style="
+                            background-color: ${getStopColor(index, props.schedule.route.stops.length)};
+                            color: white;
+                            width: 30px;
+                            height: 30px;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-weight: bold;
+                            font-size: 12px;
+                            border: 2px solid white;
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                        ">${index + 1}</div>`,
+                        className: '',
+                        iconSize: [30, 30]
+                    });
+                    
+                    L.marker([lat, lng], { icon: stopIcon })
+                        .addTo(map)
+                        .bindPopup(`
+                            <div class="font-bold">${stop.name || `Stop ${index + 1}`}</div>
+                            <div class="text-sm font-mono">${lat}, ${lng}</div>
+                        `);
+                    
+                    bounds.extend([lat, lng]);
+                }
+            });
+            
+            // Draw route line if there are multiple stops
+            if (props.schedule.route.stops.length > 1) {
+                const routePoints = props.schedule.route.stops
+                    .filter(stop => stop.lat && stop.lng)
+                    .map(stop => [parseFloat(stop.lat), parseFloat(stop.lng)]);
+                
+                if (routePoints.length > 1) {
+                    L.polyline(routePoints, {
+                        color: '#3b82f6',
+                        weight: 4,
+                        opacity: 0.7
+                    }).addTo(map);
+                }
+            }
+            
+            // Fit map to show all stops
+            if (bounds.isValid()) {
+                map.fitBounds(bounds, { padding: [20, 20] });
+            }
+        }
+        
+        // Add waypoints if available
+        if (props.schedule.route?.waypoints && props.schedule.route.waypoints.length > 0) {
+            props.schedule.route.waypoints.forEach((waypoint, index) => {
+                if (waypoint.lat && waypoint.lng) {
+                    const lat = parseFloat(waypoint.lat);
+                    const lng = parseFloat(waypoint.lng);
+                    
+                    L.circleMarker([lat, lng], {
+                        radius: 5,
+                        fillColor: '#f59e0b',
+                        color: '#ffffff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map)
+                    .bindPopup(`<div class="text-sm">Waypoint ${index + 1}</div>`);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error initializing map:', error);
+    }
+}
+
+function getStopColor(index, total) {
+    if (index === 0) return '#10b981'; // green for start
+    if (index === total - 1) return '#ef4444'; // red for end
+    return '#3b82f6'; // blue for intermediate stops
+}
 
 function formatDateTime(dateString) {
     return new Date(dateString).toLocaleString();
